@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detetor e Analisador de Jogo de Futsal (Design App)</title>
+    <title>Volume de Jogo</title>
     <!-- Carrega o Tailwind CSS para um design moderno e responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,6 +23,7 @@
             font-weight: 600;
             padding: 16px 24px; /* Botões maiores para toque */
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+            font-size: 1.125rem; /* Large text */
         }
         .btn-base:hover {
             opacity: 0.95;
@@ -30,11 +31,17 @@
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
         }
 
-        /* Estilos para os botões de controlo (Iniciar/Parar/Reset) */
-        .btn-action {
-            @apply btn-base text-white text-lg;
+        /* Estilos para o botão principal de Ação (Iniciar/Pausar) */
+        .btn-action-main {
+            @apply btn-base text-white text-xl w-full;
+            padding: 20px 24px; /* AINDA MAIOR */
         }
         
+        /* Estilos para os botões de Configuração (Load/Apply) */
+        .btn-config {
+             @apply btn-base text-white w-full py-3 text-lg;
+        }
+
         /* Estilos para os botões de Jogadores */
         .player-btn {
             padding: 12px 8px; /* Maior área de toque */
@@ -91,6 +98,14 @@
             font-weight: 600;
             margin-bottom: 20px;
         }
+
+        /* Estilo para fixar o Placar no topo */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10; /* Garante que fica por cima de outros elementos */
+            width: 100%; /* Garante a largura total para o botão principal */
+        }
     </style>
     <script>
         tailwind.config = {
@@ -109,33 +124,25 @@
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
     <div id="app" class="mx-auto bg-white p-6 sm:p-10 rounded-3xl shadow-2xl w-full max-w-6xl border border-gray-100">
-        <h1 class="text-3xl font-extrabold text-center mb-1 text-gray-900">Detetor de Jogo de Futsal</h1>
-        <p class="text-center text-gray-500 mb-8">Registo de tempo (MM:SS) e controlo de substituições | Design Clean</p>
+        
+        <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-900">Volume de Jogo</h1>
 
-        <!-- PLACAR SIMULADO E CONTROLO (TOPO) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-center">
-            
-            <!-- Relógio de Jogo (Simulação) -->
-            <div id="scoreboardContainer" class="md:col-span-2 bg-gray-900 rounded-2xl p-6 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800">
+        <!-- PLACAR FIXO (STICKY HEADER) -->
+        <div id="stickyHeader" class="sticky-header bg-white pb-6 pt-2 rounded-b-2xl shadow-xl border-b border-gray-200 mb-6">
+            <div id="scoreboardContainer" class="bg-gray-900 rounded-2xl p-6 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800">
                 <h2 class="text-lg font-semibold text-gray-400 mb-2">Relógio de Jogo (MM:SS)</h2>
                 <div id="scoreboardDisplay" class="scoreboard-display">
                     20:00
                 </div>
             </div>
-
-            <!-- Controlo de Jogo (Iniciar/Parar/Reset) -->
-            <div class="md:col-span-1 flex flex-col space-y-4">
-                <button id="toggleScoreboardBtn" onclick="toggleScoreboardRun()" class="btn-action bg-control-blue hover:bg-blue-600" disabled>
-                    Iniciar Relógio
-                </button>
-                <button id="stopResetBtn" onclick="stopAndReset()" class="btn-action bg-gray-500 hover:bg-gray-600" disabled>
-                    PARAR E REINICIAR TUDO
-                </button>
-            </div>
+             <!-- Botão principal de ação (Início/Pausa) agora por baixo e maior -->
+            <button id="toggleScoreboardBtn" onclick="toggleScoreboardRun()" class="btn-action-main bg-control-blue hover:bg-blue-600 mt-4" disabled>
+                Iniciar Relógio
+            </button>
         </div>
-
-        <!-- SECÇÕES DE CONFIGURAÇÃO E SUBSTITUIÇÃO -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- SECÇÕES DE CONFIGURAÇÃO E SUBSTITUIÇÃO (Contínuas) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
 
             <!-- COLUNA ESQUERDA: CONFIGURAÇÃO -->
             <div class="lg:col-span-1 space-y-6">
@@ -160,7 +167,7 @@
 14,Tomás Paçó
 15,Afonso Jesus
 16,Zicky Té</textarea>
-                    <button id="loadPlayersBtn" onclick="loadPlayersFromInput()" class="btn-base mt-4 w-full text-white bg-green-600 hover:bg-green-700 py-3">
+                    <button id="loadPlayersBtn" onclick="loadPlayersFromInput()" class="btn-config mt-4 w-full text-white bg-green-600 hover:bg-green-700">
                         Carregar Jogadores
                     </button>
                 </div>
@@ -168,17 +175,17 @@
                 <!-- 2. CONFIGURAÇÃO DE TEMPO -->
                 <div class="p-6 bg-neutral-light rounded-2xl border border-gray-200 shadow-md">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">2. Configuração de Tempo</h2>
+                    
+                    <!-- NOVO: Presets de Tempo -->
+                    <div class="mb-4">
+                        <label for="timePreset" class="block text-sm font-medium text-gray-700 mb-1">Presets de Jogo</label>
+                        <select id="timePreset" onchange="applyPreset()" class="w-full p-3 border border-gray-300 rounded-lg">
+                            <option value="futsal">Futsal Padrão (Decrescente 20:00)</option>
+                            <option value="corrido">Tempo Corrido (Crescente 00:00)</option>
+                        </select>
+                    </div>
+
                     <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label for="initialMinutes" class="block text-sm font-medium text-gray-700 mb-1">Minutos Iniciais</label>
-                                <input type="number" id="initialMinutes" value="20" min="0" class="w-full p-3 border border-gray-300 rounded-lg text-center">
-                            </div>
-                            <div>
-                                <label for="initialSeconds" class="block text-sm font-medium text-gray-700 mb-1">Segundos Iniciais</label>
-                                <input type="number" id="initialSeconds" value="0" min="0" max="59" class="w-full p-3 border border-gray-300 rounded-lg text-center">
-                            </div>
-                        </div>
                         <div>
                             <label for="timeDirection" class="block text-sm font-medium text-gray-700 mb-1">Direção da Contagem</label>
                             <select id="timeDirection" class="w-full p-3 border border-gray-300 rounded-lg">
@@ -186,14 +193,24 @@
                                 <option value="up">Crescente (Tempo Corrido)</option>
                             </select>
                         </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="initialMinutes" class="block text-sm font-medium text-gray-700 mb-1">Minutos Iniciais (Máx: 145)</label>
+                                <input type="number" id="initialMinutes" value="20" min="0" max="145" class="w-full p-3 border border-gray-300 rounded-lg text-center">
+                            </div>
+                            <div>
+                                <label for="initialSeconds" class="block text-sm font-medium text-gray-700 mb-1">Segundos Iniciais</label>
+                                <input type="number" id="initialSeconds" value="0" min="0" max="59" class="w-full p-3 border border-gray-300 rounded-lg text-center">
+                            </div>
+                        </div>
                     </div>
-                    <button id="applyTimeBtn" onclick="updateTimeConfiguration()" class="btn-base mt-4 w-full text-white bg-indigo-600 hover:bg-indigo-700 py-3">
+                    <button id="applyTimeBtn" onclick="updateTimeConfiguration()" class="btn-config mt-4 w-full text-white bg-indigo-600 hover:bg-indigo-700">
                         Aplicar Tempo e Resetar
                     </button>
                 </div>
             </div>
 
-            <!-- COLUNA DIREITA: SUBSTITUIÇÕES E LOGS -->
+            <!-- COLUNA DIREITA: SUBSTITUIÇÕES (Prioritária) -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- 3. CONTROLO DE SUBSTITUIÇÕES -->
                 <div class="p-6 bg-neutral-light rounded-2xl border border-gray-200 shadow-md">
@@ -211,15 +228,24 @@
                         CONFIRMAR SUBSTITUIÇÃO
                     </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- SECÇÃO DE LOGS E EXPORTAÇÃO (No Fundo) -->
+        <div class="mt-8">
+            <div class="p-6 bg-neutral-light rounded-2xl border border-gray-200 shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">4. Registo de Eventos (Log) e Exportação</h2>
                 
-                <!-- 4. REGISTO DE EVENTOS E EXPORTAÇÃO -->
-                <div class="p-6 bg-neutral-light rounded-2xl border border-gray-200 shadow-md">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">4. Registo de Eventos (Log)</h2>
-                    <div id="logPreview" class="bg-white border border-gray-300 p-4 rounded-lg h-48 overflow-y-scroll text-sm font-mono text-gray-700 mb-4">
-                        Aguardando carregamento dos jogadores...
-                    </div>
-                    
-                    <button onclick="exportData()" class="btn-base w-full text-white bg-export-green hover:bg-green-700 py-3">
+                <div id="logPreview" class="bg-white border border-gray-300 p-4 rounded-lg h-48 overflow-y-scroll text-sm font-mono text-gray-700 mb-4">
+                    Aguardando carregamento dos jogadores...
+                </div>
+                
+                <!-- Botões de Controlo e Exportação JUNTOS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="stopResetBtn" onclick="stopAndReset()" class="btn-base bg-gray-500 hover:bg-gray-600 text-white" disabled>
+                        PARAR E REINICIAR TUDO
+                    </button>
+                    <button onclick="exportData()" class="btn-base text-white bg-export-green hover:bg-green-700">
                         Exportar Registos (CSV para Excel)
                     </button>
                 </div>
@@ -262,6 +288,7 @@
         const initialMinutesInput = document.getElementById('initialMinutes');
         const initialSecondsInput = document.getElementById('initialSeconds');
         const timeDirectionSelect = document.getElementById('timeDirection');
+        const timePresetSelect = document.getElementById('timePreset'); // NOVO
 
 
         // --- FUNÇÕES DE CONVERSÃO DE TEMPO ---
@@ -296,6 +323,26 @@
         function updateScoreboardDisplay() {
             scoreboardDisplay.textContent = formatTime(totalSeconds);
         }
+        
+        // --- NOVO: FUNÇÃO PARA APLICAR PRESET ---
+        function applyPreset() {
+            const preset = timePresetSelect.value;
+            
+            if (preset === 'futsal') {
+                initialMinutesInput.value = 20;
+                initialSecondsInput.value = 0;
+                timeDirectionSelect.value = 'down';
+                initialMinutesInput.max = 60; // Max razoável para minutos de jogo
+            } else if (preset === 'corrido') {
+                initialMinutesInput.value = 0;
+                initialSecondsInput.value = 0;
+                timeDirectionSelect.value = 'up';
+                initialMinutesInput.max = 145; // Max 145 minutos, conforme pedido
+            }
+            // Chama a função principal de configuração para aplicar e resetar
+            updateTimeConfiguration(); 
+        }
+
 
         /**
          * Lógica principal de contagem do relógio.
@@ -321,10 +368,15 @@
          * Atualiza as configurações de tempo e reseta o relógio.
          */
         function updateTimeConfiguration() {
-            const minutes = parseInt(initialMinutesInput.value) || 0;
+            let minutes = parseInt(initialMinutesInput.value) || 0;
             const seconds = parseInt(initialSecondsInput.value) || 0;
             const direction = timeDirectionSelect.value;
             
+            // Limitador para minutos: 145 min (8700 segundos)
+            const maxMinutes = parseInt(initialMinutesInput.max) || 145;
+            minutes = Math.min(minutes, maxMinutes);
+            initialMinutesInput.value = minutes; // Atualiza o campo com o valor limitado
+
             initialTotalSeconds = (minutes * 60) + seconds;
             isCountingUp = direction === 'up';
 
@@ -332,7 +384,7 @@
             if (isCountingUp) {
                 // Se for contagem crescente, o relógio começa em 0:00
                 totalSeconds = 0;
-                toggleScoreboardBtn.textContent = 'Iniciar Relógio (00:00)';
+                toggleScoreboardBtn.textContent = `Iniciar Relógio (${formatTime(0)})`;
             } else {
                 // Se for contagem decrescente, o relógio começa no tempo configurado
                 totalSeconds = initialTotalSeconds;
@@ -446,13 +498,16 @@
                     name: p.name
                 }));
 
-                logData.push({
-                    type: 'initial_lineup',
-                    time: startTime,
-                    status: 'Andar', // Necessário para a lógica de cálculo de tempo total
-                    detail: { lineup: initialCourt }
-                });
-                updateLogPreview(startTime, 'initial_lineup', 'Andar');
+                // Adiciona o evento de escalação INICIAL APENAS se não houver já um evento 'initial_lineup'
+                if (!logData.some(e => e.type === 'initial_lineup')) {
+                    logData.push({
+                        type: 'initial_lineup',
+                        time: startTime,
+                        status: 'Andar', // Necessário para a lógica de cálculo de tempo total
+                        detail: { lineup: initialCourt }
+                    });
+                    updateLogPreview(startTime, 'initial_lineup', 'Andar');
+                }
                 
                 // NOVO: REGISTO IMEDIATO DE MUDANÇA DE ESTADO para 'Andar' no segundo exato do clique.
                 logData.push({ 
@@ -523,7 +578,7 @@
                 logPreview.innerHTML = `<div class="text-red-700 font-semibold">FIM DO JOGO: O registo de dados parou. Total de ${logData.length} eventos registados.</div><div class="text-sm text-gray-500">Exporte no ponto 4 para limpar o log.</div>`;
                 subStatus.textContent = "FIM DO JOGO. Exportar dados (4) ou carregar novos jogadores (1).";
             } else {
-                 logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema PARADO e REINICIADO.</div><div class="text-sm text-gray-500">O Registo de Deteção está INATIVO. Clique em "Iniciar Relógio" (no topo) para começar o registo de tempo/estado.</div>`;
+                 logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema PARADO e REINICIADO.</div><div class="text-sm text-gray-500">O Registo de Deteção está INATIVO. Clique em "Iniciar Relógio" (topo) para começar o registo de tempo/estado.</div>`;
                  subStatus.textContent = "Sistema pronto. Selecione 5 jogadores (3) e depois inicie o Relógio.";
             }
             
@@ -789,7 +844,7 @@
             playersData.forEach(p => p.totalCourtTimeSeconds = 0);
             if (logData.length === 0) return;
 
-            // 1. Determinar o estado inicial (Lineup) e o ponto de partida.
+            // --- 1. Determinar o estado inicial (Lineup) e o ponto de partida.
             let currentCourtPlayersNumbers = [];
             let loopStartIndex = 0;
 
@@ -1040,8 +1095,8 @@
 
         // --- INICIALIZAÇÃO ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicia com a configuração padrão (20:00 Decrescente)
-            updateTimeConfiguration(); 
+            // Inicia com o preset Futsal Padrão
+            applyPreset(); 
             
             // Persistência - Carregar lista de jogadores guardada
             const savedList = localStorage.getItem('futsal_player_list');
@@ -1053,6 +1108,7 @@
             loadPlayersFromInput();
             
             // Adicionar listeners para garantir que a UI se atualiza ao editar o tempo
+            timePresetSelect.addEventListener('change', applyPreset); // Seletor de preset chama applyPreset
             initialMinutesInput.addEventListener('change', updateTimeConfiguration);
             initialSecondsInput.addEventListener('change', updateTimeConfiguration);
             timeDirectionSelect.addEventListener('change', updateTimeConfiguration);
