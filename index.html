@@ -6,82 +6,64 @@
 <title>Tempos Futsal — Sport Pro</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  /* Estilos adicionais Sport Pro */
   :root{
-    --accent:#1E40AF; /* azul pro */
-    --accent-2:#DC2626; /* vermelho placar */
+    --accent:#1E40AF;
+    --accent-2:#DC2626;
     --muted:#6B7280;
     --card:#ffffff;
     --bg:#f3f4f6;
   }
   body{background:var(--bg); -webkit-font-smoothing:antialiased; font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
   .app-card{background:var(--card); border-radius:16px; box-shadow:0 6px 20px rgba(16,24,40,0.06); padding:20px;}
-  .scoreboard-large{font-weight:800; font-size:4.2rem; line-height:1; color:var(--accent-2); text-shadow:0 0 14px rgba(220,38,38,0.25);}
-  .control-btn{border-radius:12px; padding:14px 16px; font-weight:700; box-shadow:0 6px 18px rgba(16,24,40,0.08);}
+  .scoreboard-large{font-weight:900; font-size:7rem; line-height:1; text-align:center; color:var(--accent-2);}
+  .control-btn{border-radius:14px; padding:18px; font-size:1.3rem; font-weight:800; box-shadow:0 6px 18px rgba(16,24,40,0.08);}
   .player-btn{border-radius:12px; padding:14px; font-weight:700; transition:transform .12s, box-shadow .12s;}
   .player-btn:active{transform:translateY(1px);}
-  .player-grid {display:grid; gap:12px;}
+  .player-grid {display:grid; gap:14px;}
   @media (min-width:640px){ .player-grid{grid-template-columns:repeat(3,1fr);} }
   @media (min-width:900px){ .player-grid{grid-template-columns:repeat(4,1fr);} }
   .player-court{background:#16A34A;color:white;border:2px solid #15803D;}
   .player-bench{background:#374151;color:white;border:2px solid #374151;}
-  .player-out-select{background:#DC2626;color:white; border:2px solid #b91c1c; box-shadow:0 6px 20px rgba(220,38,38,0.12);}
-  .player-in-select{background:#2563EB;color:white; border:2px solid #1e40af; box-shadow:0 6px 20px rgba(37,99,235,0.12);}
+  .player-out-select{background:#DC2626;color:white; border:2px solid #b91c1c;}
+  .player-in-select{background:#2563EB;color:white; border:2px solid #1e40af;}
   .small-muted{color:var(--muted); font-size:0.95rem;}
-  .section-title{font-size:1.05rem; font-weight:800; color:#0f172a;}
+  .section-title{font-size:1.1rem; font-weight:800; color:#0f172a;}
   .pill{display:inline-block; padding:6px 10px; border-radius:999px; background:#EEF2FF; color:var(--accent); font-weight:700; font-size:0.9rem;}
-  /* layout */
-  .layout{max-width:1000px; margin:24px auto; padding:12px;}
-  .sticky-top{position:sticky; top:12px; z-index:40;}
+  .layout{max-width:1150px; margin:24px auto; padding:12px;}
+  .sticky-top{position:sticky; top:8px; z-index:40;}
 </style>
 </head>
 <body>
 <div class="layout">
-  <header class="app-card mb-6 flex items-center justify-between gap-4">
+
+  <header class="app-card mb-6 flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-extrabold">Tempos Futsal</h1>
-      <div class="small-muted">Sport Pro — otimizado para iPad</div>
+      <h1 class="text-3xl font-extrabold">Tempos Futsal</h1>
+      <div class="small-muted">Sport Pro, otimizado para iPad</div>
     </div>
-    <div class="text-right">
-      <div class="pill">Modo Tablet</div>
-    </div>
+    <div class="pill">Modo Tablet</div>
   </header>
 
-  <!-- Placar fixo -->
+  <!-- Relógio fixo -->
   <div class="sticky-top">
-    <div class="app-card mb-6 text-center">
-      <div class="small-muted mb-1">Relógio de Jogo</div>
-      <div id="displayClock" class="scoreboard-large" aria-live="polite">20:00</div>
-      <div class="mt-3 flex gap-3 justify-center">
-        <button id="btnToggle" class="control-btn bg-indigo-600 text-white control-btn disabled:opacity-50">Iniciar Relógio</button>
-        <button id="btnStop" class="control-btn bg-gray-700 text-white disabled:opacity-50">Parar e Reiniciar</button>
-      </div>
+    <div id="clockContainer" class="app-card mb-6 text-center bg-gray-900">
+      <div class="small-muted mb-2 text-white">Relógio de Jogo</div>
+      <div id="displayClock" class="scoreboard-large">20:00</div>
     </div>
   </div>
 
-  <!-- principais controles e secções -->
+  <!-- layout principal -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- coluna esquerda: plantel e tempo -->
+
+    <!-- ESQUERDA -->
     <div class="space-y-6">
+
       <section class="app-card">
         <div class="section-title mb-2">1. Plantel</div>
-        <div class="small-muted mb-2">Insere cada jogador numa linha: número, nome</div>
-        <textarea id="playerInput" rows="6" class="w-full p-3 border rounded-md font-mono text-sm">1,Bebé
-2,André Sousa
-3,João Matos
-4,Nilson
-5,Fábio Cecílio
-6,Ricardinho
-7,Cardinal
-8,Pany Varela
-9,Tiago Brito
-10,Bruno Coelho
-11,Miguel Ângelo
-12,Vítor Hugo
-13,Erick Mendonça
-14,Tomás Paçó
-15,Afonso Jesus
-16,Zicky Té</textarea>
+        <div class="small-muted mb-2">Insere cada jogador: número, nome</div>
+
+        <textarea id="playerInput" rows="6" class="w-full p-3 border rounded-md font-mono text-sm"></textarea>
+
         <button id="btnLoad" class="mt-3 w-full bg-yellow-600 text-white control-btn">Carregar Plantel</button>
       </section>
 
@@ -95,62 +77,75 @@
           <option value="down">Decrescente</option>
           <option value="up">Crescente</option>
         </select>
+
         <button id="btnApplyTime" class="mt-3 w-full bg-indigo-500 text-white control-btn">Aplicar Tempo</button>
       </section>
     </div>
 
-    <!-- coluna centro: jogadores -->
-    <div class="lg:col-span-1">
-      <section class="app-card">
+    <!-- CENTRO -->
+    <div>
+
+      <section class="app-card mb-5">
         <div class="flex items-center justify-between">
           <div class="section-title">3. Jogadores</div>
-          <div class="small-muted" id="playersCount">0 jogadores</div>
+          <div id="playersCount" class="small-muted">0 jogadores</div>
         </div>
 
-        <div id="subInfo" class="small-muted mt-2 mb-3">Carrega o plantel e escolhe 5 titulares.</div>
+        <div id="subInfo" class="small-muted mt-2 mb-4">Carrega o plantel primeiro</div>
 
         <div id="playerGrid" class="player-grid"></div>
+      </section>
+
+      <!-- BOTÃO PRINCIPAL INICIAR -->
+      <button id="btnToggle"
+        class="w-full bg-indigo-600 text-white control-btn mb-6 disabled:opacity-50">
+        Iniciar Relógio
+      </button>
+
+      <section class="app-card">
+        <div class="section-title mb-2">Registo rápido</div>
+        <div id="logBox" class="bg-white border rounded p-3 h-48 overflow-auto font-mono text-sm">Sem registos.</div>
+      </section>
+
+    </div>
+
+    <!-- DIREITA -->
+    <div class="space-y-6">
+
+      <section class="app-card">
+        <div class="section-title">Controlo Geral</div>
+        <div class="small-muted mt-2">Botão longe do iniciar</div>
+
+        <button id="btnStop" class="mt-4 w-full bg-gray-700 text-white control-btn disabled:opacity-50">Parar e Reiniciar</button>
 
         <button id="btnConfirmSub" class="mt-4 w-full bg-blue-600 text-white control-btn opacity-50" disabled>Confirmar Substituição</button>
       </section>
 
-      <section class="app-card mt-4">
-        <div class="section-title mb-2">Registo rápido</div>
-        <div id="logBox" class="bg-white border rounded p-3 h-40 overflow-auto font-mono text-sm">Sem registos.</div>
-      </section>
-    </div>
-
-    <!-- coluna direita: export / resumo -->
-    <div class="space-y-6">
       <section class="app-card">
-        <div class="section-title">Resumo</div>
-        <div class="small-muted mt-2">Tempo total por jogador e exportação</div>
-        <div class="mt-3 grid gap-2">
-          <button id="btnExport" class="w-full bg-emerald-600 text-white control-btn">Exportar CSV</button>
-          <button id="btnClear" class="w-full bg-gray-300 text-black control-btn">Limpar Registo</button>
-        </div>
+        <div class="section-title mb-2">Exportação</div>
+        <button id="btnExport" class="w-full bg-emerald-600 text-white control-btn">Exportar CSV</button>
+        <button id="btnClear" class="w-full bg-gray-300 text-black control-btn mt-3">Limpar Registo</button>
       </section>
 
-      <section class="app-card">
-        <div class="section-title">Notas</div>
-        <div class="small-muted mt-2">Botões maiores, layout pensado para toque. Relógio sempre visível.</div>
-      </section>
     </div>
+
   </div>
 </div>
 
 <script>
-/* ------ Estado inicial e utilitários ------ */
-let players = []; // {number,name,court,totalSeconds}
+/* ======== ESTADO GLOBAL ======== */
+let players = [];
 let selectedOut = null, selectedIn = null;
-let logData = []; // eventos
-let totalSeconds = 20*60;
+let logData = [];
+let totalSeconds = 20 * 60;
 let countingUp = false;
 let running = false;
 let tick = null;
 
+/* ======== ELEMENTOS ======== */
 const el = id => document.getElementById(id);
 const displayClock = el('displayClock');
+const clockContainer = el('clockContainer');
 const btnToggle = el('btnToggle');
 const btnStop = el('btnStop');
 const btnLoad = el('btnLoad');
@@ -160,209 +155,242 @@ const btnExport = el('btnExport');
 const btnClear = el('btnClear');
 const playerGrid = el('playerGrid');
 const playersCount = el('playersCount');
-const logBox = el('logBox');
 const subInfo = el('subInfo');
-const minInput = el('minInput'), secInput = el('secInput'), dirInput = el('dirInput');
 const playerInput = el('playerInput');
+const logBox = el('logBox');
+const minInput = el('minInput'), secInput = el('secInput'), dirInput = el('dirInput');
 
-/* util */
-function formatMMSS(s){
-  const m = String(Math.floor(s/60)).padStart(2,'0');
-  const ss = String(s%60).padStart(2,'0');
+/* ======== FUNÇÕES DE TEMPO ======== */
+function formatMMSS(s) {
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
   return `${m}:${ss}`;
 }
 
-function refreshClock(){
+function refreshClock() {
   displayClock.textContent = formatMMSS(totalSeconds);
 }
 
-/* ------ players UI ------ */
-function renderPlayers(){
+/* ======== RENDERIZAR JOGADORES ======== */
+function renderPlayers() {
   playerGrid.innerHTML = '';
   playersCount.textContent = players.length + ' jogadores';
-  players.forEach(p=>{
+
+  players.forEach(p => {
     const b = document.createElement('button');
     b.className = 'player-btn';
-    b.textContent = `${p.number} — ${p.name}`;
-    if(p === selectedOut) b.classList.add('player-out-select');
-    else if(p === selectedIn) b.classList.add('player-in-select');
-    else if(p.court) b.classList.add('player-court');
+
+    if (p === selectedOut) b.classList.add('player-out-select');
+    else if (p === selectedIn) b.classList.add('player-in-select');
+    else if (p.court) b.classList.add('player-court');
     else b.classList.add('player-bench');
 
-    b.onclick = ()=>onPlayerClick(p);
+    b.textContent = `${p.number}, ${p.name}`;
+    b.onclick = () => onPlayerClick(p);
     playerGrid.appendChild(b);
   });
+
   updateSubButtons();
 }
 
-function onPlayerClick(p){
-  const onField = players.filter(x=>x.court).length;
-  // seleção inicial
-  if(onField < 5 && !p.court){
+/* ======== CLICK NOS JOGADORES ======== */
+function onPlayerClick(p) {
+  const onField = players.filter(x => x.court).length;
+
+  if (onField < 5 && !p.court) {
     p.court = true;
-    logPush('info', `${p.name} (#${p.number}) seleccionado como titular`);
     renderPlayers();
     return;
   }
-  // substituição
-  if(p.court){
-    if(selectedOut === p) selectedOut = null; else selectedOut = p;
+
+  if (p.court) {
+    selectedOut = selectedOut === p ? null : p;
   } else {
-    if(selectedIn === p) selectedIn = null; else selectedIn = p;
+    selectedIn = selectedIn === p ? null : p;
   }
+
   updateSubButtons();
   renderPlayers();
 }
 
-function updateSubButtons(){
+function updateSubButtons() {
   const ready = selectedOut && selectedIn && selectedOut !== selectedIn;
+
   btnConfirmSub.disabled = !ready;
   btnConfirmSub.classList.toggle('opacity-50', !ready);
-  subInfo.textContent = (players.filter(x=>x.court).length < 5) ? 'Selecione 5 titulares.' : (ready ? `Sub: ${selectedOut.name} -> ${selectedIn.name}` : 'Clique num titular para sair e num suplente para entrar.');
+
+  subInfo.textContent = players.filter(p => p.court).length < 5
+    ? 'Selecione 5 titulares.'
+    : ready
+      ? `Substituição pronta: ${selectedOut.name}, entra ${selectedIn.name}`
+      : 'Clique num titular para sair e num suplente para entrar.';
 }
 
-/* ------ carregar e validar ------ */
-function loadPlantelFromTextarea(){
-  const lines = playerInput.value.split('\n').map(l=>l.trim()).filter(Boolean);
+/* ======== CARREGAR PLANTEL ======== */
+function loadPlantel() {
+  const lines = playerInput.value.split('\n').map(l => l.trim()).filter(Boolean);
+
   players = [];
-  for(const line of lines){
-    const parts = line.split(',');
-    if(parts.length < 2) continue;
-    const num = parseInt(parts[0]);
-    const name = parts.slice(1).join(',').trim();
-    if(isNaN(num) || !name) continue;
-    players.push({number:num, name, court:false, totalSeconds:0});
-  }
-  selectedIn = null; selectedOut = null; logData = [];
-  renderPlayers(); refreshLog();
-  btnToggle.disabled = players.length === 0;
-  subInfo.textContent = players.length ? 'Carregado. Seleccione 5 titulares.' : 'Sem jogadores';
-}
-
-/* ------ substituição ------ */
-function confirmSub(){
-  if(!(selectedOut && selectedIn)) return;
-  // registar evento
-  logData.push({type:'sub', time:formatMMSS(totalSeconds), out:selectedOut.number, outName:selectedOut.name, in:selectedIn.number, inName:selectedIn.name, status: running ? 'Andar' : 'Parado'});
-  // aplicar
-  selectedOut.court = false;
-  selectedIn.court = true;
-  selectedOut = null; selectedIn = null;
-  renderPlayers(); refreshLog();
-}
-
-/* ------ logging ------ */
-function logPush(type,text){
-  logData.unshift({type:'info', text, time:formatMMSS(totalSeconds)});
-  if(logData.length>200) logData.pop();
-  refreshLog();
-}
-
-function refreshLog(){
-  if(logData.length===0) { logBox.textContent = 'Sem registos.'; return; }
-  logBox.innerHTML = '';
-  for(const e of logData.slice(0,60)){
-    const d = document.createElement('div');
-    d.style.padding='6px 0';
-    if(e.type === 'sub') d.innerHTML = `<strong>[${e.time}] Substituição</strong> ${e.outName} → ${e.inName} <span class="small-muted">(${e.status})</span>`;
-    else if(e.type === 'status') d.innerHTML = `<strong>[${e.time}] Estado</strong> ${e.status}`;
-    else d.textContent = `[${e.time}] ${e.text || ''}`;
-    logBox.appendChild(d);
-  }
-}
-
-/* ------ relógio ------ */
-function startClock(){
-  if(running) return;
-  running = true;
-  btnToggle.textContent = 'Pausar Relógio';
-  btnStop.disabled = false;
-  logData.unshift({type:'status', time:formatMMSS(totalSeconds), status:'Andar'});
-  tick = setInterval(()=> {
-    if(countingUp) totalSeconds++; else if(totalSeconds>0) totalSeconds--;
-    refreshClock();
-  },1000);
-  refreshLog();
-}
-
-function pauseClock(){
-  if(!running) return;
-  running = false;
-  clearInterval(tick);
-  btnToggle.textContent = 'Recomeçar Relógio';
-  logData.unshift({type:'status', time:formatMMSS(totalSeconds), status:'Parado'});
-  refreshLog();
-}
-
-function toggleClock(){ running ? pauseClock() : startClock(); }
-
-function stopAndReset(){
-  clearInterval(tick); running=false;
-  // reset para configuração corrente
-  const m = parseInt(minInput.value) || 0;
-  const s = parseInt(secInput.value) || 0;
-  totalSeconds = (dirInput.value === 'up') ? 0 : (m*60 + s);
-  countingUp = dirInput.value === 'up';
-  btnToggle.textContent = 'Iniciar Relógio';
-  btnStop.disabled = true;
-  selectedIn = null; selectedOut = null;
-  players.forEach(p=>p.court=false);
-  logData.unshift({type:'info', time:formatMMSS(totalSeconds), text:'Reset do sistema'});
-  renderPlayers(); refreshClock(); refreshLog();
-}
-
-/* ------ export CSV (ponto e vírgula) ------ */
-function exportCSV(){
-  // calcular totais simples com base nos registos status e sub
-  // (implementação simplificada: exporta logData com campos)
-  const lines = [];
-  lines.push('Tempo;Tipo;Out_No;Out_Nome;In_No;In_Nome;EstadoRelogio');
-  for(const e of logData.slice().reverse()){
-    if(e.type === 'sub'){
-      lines.push(`${e.time};Substituição;${e.out};${e.outName};${e.in};${e.inName};${e.status}`);
-    } else if(e.type === 'status'){
-      lines.push(`${e.time};Estado;;;;;${e.status}`);
-    } else {
-      lines.push(`${e.time};Info;;;;;`);
+  for (const line of lines) {
+    const [n, ...rest] = line.split(',');
+    const num = parseInt(n);
+    const name = rest.join(',').trim();
+    if (!isNaN(num) && name) {
+      players.push({ number: num, name, court: false });
     }
   }
-  const csv = '\uFEFF' + lines.join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+
+  localStorage.setItem('plantel_futsal', playerInput.value);
+
+  selectedOut = null;
+  selectedIn = null;
+  logData = [];
+
+  renderPlayers();
+  refreshLog();
+
+  btnToggle.disabled = players.length === 0;
+}
+
+/* ======== SUBSTITUIÇÃO ======== */
+function confirmSub() {
+  if (!(selectedOut && selectedIn)) return;
+
+  logData.unshift({
+    type: 'sub',
+    time: formatMMSS(totalSeconds),
+    outName: selectedOut.name,
+    inName: selectedIn.name,
+    status: running ? 'Andar' : 'Parado'
+  });
+
+  selectedOut.court = false;
+  selectedIn.court = true;
+
+  selectedOut = null;
+  selectedIn = null;
+
+  renderPlayers();
+  refreshLog();
+}
+
+/* ======== RELÓGIO ======== */
+function startClock() {
+  running = true;
+  btnToggle.textContent = 'Pausar Relógio';
+  btnToggle.classList.remove('bg-indigo-600');
+  btnToggle.classList.add('bg-yellow-500');
+
+  clockContainer.classList.remove('bg-yellow-300');
+  clockContainer.classList.add('bg-gray-900');
+
+  btnStop.disabled = false;
+
+  tick = setInterval(() => {
+    if (countingUp) totalSeconds++;
+    else if (totalSeconds > 0) totalSeconds--;
+    refreshClock();
+  }, 1000);
+}
+
+function pauseClock() {
+  running = false;
+  clearInterval(tick);
+
+  btnToggle.textContent = 'Retomar Relógio';
+  btnToggle.classList.remove('bg-yellow-500');
+  btnToggle.classList.add('bg-indigo-600');
+
+  clockContainer.classList.remove('bg-gray-900');
+  clockContainer.classList.add('bg-yellow-300');
+}
+
+function toggleClock() {
+  running ? pauseClock() : startClock();
+}
+
+function stopAndReset() {
+  clearInterval(tick);
+  running = false;
+
+  const m = parseInt(minInput.value) || 0;
+  const s = parseInt(secInput.value) || 0;
+
+  totalSeconds = dirInput.value === 'up' ? 0 : m * 60 + s;
+  countingUp = dirInput.value === 'up';
+
+  refreshClock();
+
+  clockContainer.classList.add('bg-gray-900');
+  btnToggle.textContent = 'Iniciar Relógio';
+  btnToggle.classList.remove('bg-yellow-500');
+  btnToggle.classList.add('bg-indigo-600');
+
+  btnStop.disabled = true;
+}
+
+/* ======== EXPORTAÇÃO ======== */
+function exportCSV() {
+  const rows = ['Tempo;Evento;Detalhes'];
+
+  for (const e of logData.slice().reverse()) {
+    if (e.type === 'sub') {
+      rows.push(`${e.time};Substituição;Sai ${e.outName}, Entra ${e.inName}`);
+    } else {
+      rows.push(`${e.time};Info;${e.text || ''}`);
+    }
+  }
+
+  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'registo_futsal.csv';
-  document.body.appendChild(a);
   a.click();
-  a.remove();
-  logData = [];
-  refreshLog();
 }
 
-/* ------ eventos UI ------ */
-btnLoad.addEventListener('click', ()=>{ loadPlantelFromTextarea(); });
-btnApplyTime.addEventListener('click', ()=>{ stopAndReset(); });
-btnToggle.addEventListener('click', ()=>{ toggleClock(); });
-btnStop.addEventListener('click', ()=>{ stopAndReset(); });
-btnConfirmSub.addEventListener('click', ()=>{ confirmSub(); });
-btnExport.addEventListener('click', ()=>{ exportCSV(); });
-btnClear.addEventListener('click', ()=>{ logData=[]; refreshLog(); });
+/* ======== LOGS ======== */
+function refreshLog() {
+  if (logData.length === 0) {
+    logBox.textContent = 'Sem registos.';
+    return;
+  }
 
-/* atalho teclado para testes no Mac */
-document.addEventListener('keydown', e=>{
-  if(e.key === ' '){ e.preventDefault(); toggleClock(); }
-});
+  logBox.innerHTML = '';
+  logData.slice(0, 60).forEach(e => {
+    const d = document.createElement('div');
+    d.style.padding = '6px 0';
 
-/* iniciar UI por defeito */
-(function init(){
-  // aplicar tempo inicial e carregar jogadores padrão
-  const m = parseInt(minInput.value) || 20;
-  const s = parseInt(secInput.value) || 0;
-  totalSeconds = m*60 + s;
+    if (e.type === 'sub') {
+      d.innerHTML = `<strong>[${e.time}] Substituição</strong> Sai ${e.outName}, Entra ${e.inName}`;
+    } else {
+      d.textContent = `[${e.time}] ${e.text || ''}`;
+    }
+
+    logBox.appendChild(d);
+  });
+}
+
+/* ======== EVENTOS ======== */
+btnLoad.onclick = loadPlantel;
+btnConfirmSub.onclick = confirmSub;
+btnToggle.onclick = toggleClock;
+btnStop.onclick = stopAndReset;
+btnApplyTime.onclick = stopAndReset;
+btnExport.onclick = exportCSV;
+btnClear.onclick = () => { logData = []; refreshLog(); };
+
+/* ======== INÍCIO ======== */
+(function init() {
   refreshClock();
-  // carregar default do textarea
-  // não carregar jogadores automaticamente, deixa o utilizador confirmar
   btnToggle.disabled = true;
+
+  const saved = localStorage.getItem('plantel_futsal');
+  if (saved) {
+    playerInput.value = saved;
+    loadPlantel();
+  }
 })();
 </script>
+
 </body>
 </html>
