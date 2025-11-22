@@ -127,7 +127,7 @@
     <div id="app" class="mx-auto bg-white rounded-3xl shadow-2xl w-full max-w-6xl border border-gray-100">
         
         <div class="px-6 sm:px-10 pt-6">
-            <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-900">Volume de Jogo</h1>
+            <h1 class="text-3xl font-extrabold text-center mb-1 text-gray-900">Volume de Jogo</h1>
         </div>
 
         <!-- PLACAR FIXO (STICKY HEADER) -->
@@ -135,8 +135,8 @@
             
             <!-- Conteúdo do placar alinhado com o padding do app (px-6) -->
             <div class="px-6 sm:px-10">
-                <div id="scoreboardContainer" class="bg-gray-900 rounded-2xl p-6 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800 mb-4">
-                    <h2 class="text-lg font-semibold text-gray-400 mb-2">Relógio de Jogo (MM:SS)</h2>
+                <div id="scoreboardContainer" class="bg-gray-900 rounded-2xl p-3 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800 mb-2">
+                    <h2 class="text-lg font-semibold text-gray-400 mb-1">Relógio de Jogo (MM:SS)</h2>
                     <div id="scoreboardDisplay" class="scoreboard-display">
                         20:00
                     </div>
@@ -144,8 +144,8 @@
 
                 <!-- BOTÃO PRINCIPAL: INICIAR/PAUSAR RELÓGIO (AGORA CENTRALIZADO) -->
                 <button id="toggleScoreboardBtn" onclick="toggleScoreboardRun()" 
-                    class="btn-action-main bg-control-blue hover:bg-blue-600 w-full sm:max-w-sm mx-auto" 
-                    disabled>
+    class="btn-action-main bg-control-blue hover:bg-blue-600 w-full mx-auto block" 
+    disabled>
                     Iniciar Relógio
                 </button>
             </div>
@@ -164,22 +164,22 @@
                     <div class="p-6 bg-neutral-light rounded-2xl border border-gray-200 shadow-md">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">1. Plantel (Lista)</h2>
                         <textarea id="playerInput" rows="7" class="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-blue-400">
-1,Bebé
-2,André Sousa
-3,João Matos
-4,Nilson
-5,Fábio Cecílio
-6,Ricardinho
-7,Cardinal
-8,Pany Varela
-9,Tiago Brito
+1,Edu
+2,André Coelho
+3,Tomás Paçó
+4,Afonso Jesus
+5,Rúben Góis
+6,Kutchy
+7,Diogo Santos
+8,Erick
+9,Bruno Maior
 10,Bruno Coelho
-11,Miguel Ângelo
-12,Vítor Hugo
-13,Erick Mendonça
-14,Tomás Paçó
-15,Afonso Jesus
-16,Zicky Té</textarea>
+11,Pany
+12,André Coelho
+13,Tiago Brito
+14,Carlinhos
+16,Bernardo Paço
+15,Outro</textarea>
                         <button id="loadPlayersBtn" onclick="loadPlayersFromInput()" class="btn-config mt-4 w-full text-white bg-green-600 hover:bg-green-700">
                             Carregar Jogadores
                         </button>
