@@ -1094,7 +1094,19 @@ calculatePlayerTimeTotals();
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'registo_jogo_futsal_export_com_totais.csv';
+
+        // Criar timestamp com data e hora
+const now = new Date();
+const timestamp =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, '0') + "-" +
+    String(now.getDate()).padStart(2, '0') + "_" +
+    String(now.getHours()).padStart(2, '0') + "-" +
+    String(now.getMinutes()).padStart(2, '0');
+
+// Definir nome único do ficheiro
+a.download = `${timestamp}_Volume_de_Jogo.csv`;
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
