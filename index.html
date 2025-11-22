@@ -1117,7 +1117,9 @@ a.download = `${timestamp}_Volume_de_Jogo.csv`;
             stopAndReset(); 
             
             // Mensagem de sucesso
-            subStatus.textContent = `Dados exportados com sucesso! Ficheiro: registo_jogo_futsal_export_com_totais.csv (Separador: Ponto e Vírgula ';'). O log foi reiniciado.`;
+            subStatus.textContent =
+    `Dados exportados com sucesso!, Ficheiro criado:, ${timestamp}_Volume_de_Jogo.csv`;
+subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
             subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
         }
 
