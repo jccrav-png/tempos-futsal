@@ -986,7 +986,7 @@
             // SECÇÃO 1: ESCALAÇÃO INICIAL
             // --------------------------------------------------------
             finalContentArray.push(" EQUIPA ");
-            finalContentArray.push(["Número", "Nome", "Status Inicial (No Início do Jogo)"].join(delimiter));
+            finalContentArray.push(["Número", "Nome", "(Início do Jogo)"].join(delimiter));
             
             const initialLineupEvent = logData.find(e => e.type === 'initial_lineup');
             const initialLineupNumbers = initialLineupEvent ? initialLineupEvent.detail.lineup.map(p => p.num) : playersData.filter(p => p.court).map(p => p.number);
@@ -1008,7 +1008,7 @@
             // SECÇÃO 2: RESUMO DE TEMPO POR JOGADOR (NOVO)
             // --------------------------------------------------------
             finalContentArray.push("TEMPO UTILIZADO");
-            finalContentArray.push(["Número", "Nome do Jogador", "Tempo Total em Campo (MM:SS)", "Tempo Total em Campo (Segundos)"].join(delimiter));
+            finalContentArray.push(["Número", "Nome", "T.Total (MM:SS)", "T.Total (Seg.)"].join(delimiter));
 
             // Ordena por tempo total (decrescente)
             const sortedPlayersByTime = playersData.sort((a, b) => b.totalCourtTimeSeconds - a.totalCourtTimeSeconds);
@@ -1028,7 +1028,7 @@
             // --------------------------------------------------------
             // SECÇÃO 3: REGISTO DE EVENTOS (LOG)
             // --------------------------------------------------------
-            finalContentArray.push("REGISTO DE EVENTOS (LOG) -----------------");
+            finalContentArray.push("EVENTOS (LOG)");
             finalContentArray.push(["Tempo (MM:SS)", "Estado do Relógio", "Tipo de Evento", "Num Sai", "Nome Sai", "Num Entra", "Nome Entra"].join(delimiter));
 
             let previousClockStatus = null; // Para controlar a repetição do estado
