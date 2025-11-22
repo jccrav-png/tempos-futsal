@@ -1107,25 +1107,52 @@
         }
 
         // --- INICIALIZAÇÃO ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Inicia com o preset Futsal Padrão
-            applyPreset(); 
-            
-            // Persistência - Carregar lista de jogadores guardada
-            const savedList = localStorage.getItem('futsal_player_list');
-            if (savedList) {
-                playerInput.value = savedList;
-            }
-            
-            // Carrega os dados (guardados ou de exemplo) automaticamente
-            loadPlayersFromInput();
-            
-            // Adicionar listeners para garantir que a UI se atualiza ao editar o tempo
-            timePresetSelect.addEventListener('change', applyPreset); // Seletor de preset chama applyPreset
-            // Os inputs e o select de direção chamam updateTimeConfiguration, que é o que realmente aplica o tempo.
-            initialMinutesInput.addEventListener('change', updateTimeConfiguration);
-            initialSecondsInput.addEventListener('change', updateTimeConfiguration);
-            timeDirectionSelect.addEventListener('change', updateTimeConfiguration);
+document.addEventListener('DOMContentLoaded', () => {
+    // Aplica o preset inicial
+    applyPreset(); 
+    
+    // Verifica se existe plantel guardado
+    const savedList = localStorage.getItem('futsal_player_list');
+
+    if (savedList) {
+        // Preenche o textarea
+        playerInput.value = savedList;
+
+        // Carrega os jogadores SEM resetar o sistema
+        const lines = savedList.split('\n').filter(line => line.trim() !== '');
+
+        playersData = lines.map(line => {
+            const [num, name] = line.split(',').map(v => v.trim());
+            return {
+                number: parseInt(num),
+                name: name,
+                court: false,
+                totalCourtTimeSeconds: 0
+            };
+        });
+
+        // Renderiza os jogadores no ecrã
+        renderPlayers();
+
+        // Atualiza mensagens
+        subStatus.textContent = "Plantel carregado automaticamente da última sessão. Selecione os 5 iniciais.";
+        subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
+
+        logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Plantel restaurado (${playersData.length} jogadores).</div><div class="text-sm text-gray-500">Selecione os 5 iniciais antes de iniciar o relógio.</div>`;
+        
+        // Ativa o botão do relógio
+        toggleScoreboardBtn.disabled = false;
+
+    } else {
+        // Não existe plantel guardado, usar o default do textarea
+        loadPlayersFromInput();
+    }
+    
+    // Listeners para atualizar tempo
+    timePresetSelect.addEventListener('change', applyPreset); 
+    initialMinutesInput.addEventListener('change', updateTimeConfiguration);
+    initialSecondsInput.addEventListener('change', updateTimeConfiguration);
+    timeDirectionSelect.addEventListener('change', updateTimeConfiguration);
         });
 
     </script>
