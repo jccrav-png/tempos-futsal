@@ -972,8 +972,11 @@
                 return;
             }
 
-            // --- 0. CALCULAR TOTAIS DE TEMPO ---
-            calculatePlayerTimeTotals(); 
+            // Garantir que os nomes estão atualizados no playersData
+loadPlayersFromInput();
+
+// --- 0. CALCULAR TOTAIS DE TEMPO ---
+calculatePlayerTimeTotals();
 
             // Alterado para ponto e vírgula (;) para melhor compatibilidade com Excel em regiões como Portugal.
             const delimiter = ';'; 
