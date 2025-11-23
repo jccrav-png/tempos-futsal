@@ -972,8 +972,8 @@
                 return;
             }
 
-            // Garantir que os nomes estão atualizados no playersData
-loadPlayersFromInput();
+    // --- 0. CALCULAR TOTAIS DE TEMPO ---
+    calculatePlayerTimeTotals();
 
 // --- 0. CALCULAR TOTAIS DE TEMPO ---
 calculatePlayerTimeTotals();
@@ -1028,72 +1028,138 @@ calculatePlayerTimeTotals();
             finalContentArray.push(...timeSummaryLines);
             finalContentArray.push(""); // Linha de separação
 
-            // --------------------------------------------------------
-            // SECÇÃO 3: REGISTO DE EVENTOS (LOG)
-            // --------------------------------------------------------
-            finalContentArray.push("EVENTOS (LOG)");
-            finalContentArray.push(["Tempo (MM:SS)", "Estado do Relógio", "Tipo de Evento", "Num Sai", "Nome Sai", "Num Entra", "Nome Entra"].join(delimiter));
+// --------------------------------------------------------
+// SECÇÃO 3: REGISTO DE EVENTOS (LOG) - ORDEM INVERTIDA & H-N LIMPA
+// --------------------------------------------------------
 
-            let previousClockStatus = null; // Para controlar a repetição do estado
+let previousClockStatus = null; // Para controlar a repetição do estado
 
-            // Filtra o log para remover a linha de escalação inicial (já tratada na Secção 1)
-            const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
-                
-                const currentClockStatus = entry.status || 'N/A';
-                
-                let statusCol = "";
-                let typeCol = "";
-                let outNum = "";
-                let outName = "";
-                let inNum = "";
-                let inName = "";
+// --------------------------------------------------------
+// 1. CÁLCULO DA SECÇÃO 3A: Log Completo (7 colunas - A a G)
+// --------------------------------------------------------
 
-                if (entry.type === 'status') {
-                    // --- Lógica de Estado (Andar/Parado): Só preenche se houver MUDANÇA ---
-                    
-                    if (currentClockStatus !== previousClockStatus) {
-                        statusCol = currentClockStatus; // Exibir o novo estado
-                        previousClockStatus = currentClockStatus; // Guardar o novo estado
-                    } else {
-                        // Estado igual ao anterior, célula em branco (para otimizar a visualização)
-                        statusCol = ""; 
-                    }
-                    
-                    // Coluna C: Tipo de Evento fica vazio para eventos de status
-                    typeCol = ""; 
+// Filtra o log para remover a linha de escalação inicial (já tratada na Secção 1)
+const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
+    
+    const currentClockStatus = entry.status || 'N/A';
+    
+    // Colunas 1-7 (Primeiro Grupo)
+    let statusCol = "";
+    let typeCol = "";
+    let outNum = "";
+    let outName = "";
+    let inNum = "";
+    let inName = "";
 
-                } else if (entry.type === 'sub') {
-                    // --- Lógica de Substituição ---
-                    const d = entry.detail;
-                    
-                    // Coluna C: Tipo de Evento = "Substituição" (como pedido)
-                    typeCol = "Substituição"; 
-                    
-                    // Coluna B: Estado do Relógio (REGRA: Fica em branco para Substituições)
-                    statusCol = ""; 
-                    
-                    // Manter: Forçar a atualização do estado anterior para que a próxima linha saiba o estado REAL
-                    previousClockStatus = currentClockStatus; 
+    // 🛑 Colunas 8-14 (H-N) NÃO SÃO MAIS INICIALIZADAS NEM USADAS.
+    // -------------------------------------------------------------
 
-                    // Colunas de detalhes
-                    outNum = d.out_no;
-                    outName = d.out_name;
-                    inNum = d.in_no;
-                    inName = d.in_name;
-                }
-                
-                // Combina tudo usando o delimitador
-                return [entry.time, statusCol, typeCol, outNum, outName, inNum, inName].join(delimiter);
-            }).filter(line => line.trim() !== delimiter.repeat(6)); // Remove linhas que sejam apenas o delimitador repetido
+    if (entry.type === 'status') {
+        // --- Lógica de Estado (Andar/Parado) ---
+        
+        if (currentClockStatus !== previousClockStatus) {
+            statusCol = currentClockStatus; // Exibir o novo estado
+            previousClockStatus = currentClockStatus; // Guardar o novo estado
+        } else {
+            statusCol = ""; // Estado igual ao anterior, célula em branco
+        }
+        
+        typeCol = ""; // Tipo de Evento vazio para Status
+        
+    } else if (entry.type === 'sub') {
+        // --- Lógica de Substituição: Preenche apenas o Primeiro Grupo (A-G) ---
+        const d = entry.detail;
+        
+        // Reinicia o estado do relógio
+        previousClockStatus = currentClockStatus;
+        
+        // --- COLUNAS 1-7 (MANTIDAS COMO FORMATO ORIGINAL) ---
+        typeCol = "Substituição"; // Tipo de Evento (Coluna C)
+        statusCol = ""; // Estado do Relógio (Coluna B - vazio para Sub)
+        
+        outNum = d.out_no;
+        outName = d.out_name;
+        inNum = d.in_no;    
+        inName = d.in_name; 
+        
+    }
+    
+    // 🛑 Combina apenas as 7 colunas (A a G) usando o delimitador
+    return [
+        entry.time, statusCol, typeCol, outNum, outName, inNum, inName
+    ].join(delimiter);
+    
+// 🛑 Remove linhas vazias (agora são 7 colunas, logo 6 delimitadores)
+}).filter(line => line.trim() !== delimiter.repeat(6)); 
 
-            finalContentArray.push(...logLines);
 
-            const fileContent = bom + finalContentArray.join('\n');
-            const blob = new Blob([fileContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
+// --------------------------------------------------------
+// 2. CÁLCULO DA SECÇÃO 3B: Log Sequencial (7 colunas - H a N)
+// ESTE BLOCO PERMANECE INALTERADO PARA MANTER OS DADOS DE SUBSTITUIÇÃO
+// --------------------------------------------------------
+
+let lastClockStatus = ""; // Variável para armazenar o último estado válido (Andar/Parado)
+
+const sequentialLogLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
+    
+    // Atualiza o estado: só guarda se for um evento de status
+    if (entry.status && entry.status !== 'N/A') {
+        lastClockStatus = entry.status;
+    }
+
+    if (entry.type === 'sub') {
+        const d = entry.detail;
+        
+        // Colunas H a N (7 colunas)
+        const xmlTimeCol = entry.time;  
+        const xmlStatusCol = lastClockStatus; 
+        const xmlTypeCol = "Substituição"; 
+        const xmlOutNum = d.out_no; 
+        const xmlOutName = d.out_name; 
+        const xmlInNum = d.in_no; 
+        const xmlInName = d.in_name; 
+        
+        // Combina as 7 colunas (H a N)
+        return [
+            xmlTimeCol, xmlStatusCol, xmlTypeCol, xmlOutNum, xmlOutName, xmlInNum, xmlInName
+        ].join(delimiter);
+    }
+    // Retorna nulo ou vazio para eventos que não são 'sub'
+    return null;
+
+}).filter(line => line !== null && line.trim() !== delimiter.repeat(6)); 
+
+
+// --------------------------------------------------------
+// 3. ADIÇÃO FINAL AO ARRAY (ORDEM INVERTIDA)
+// --------------------------------------------------------
+
+// A. SECÇÃO 3B PRIMEIRO (Log Sequencial, 7 colunas)
+finalContentArray.push(""); 
+finalContentArray.push("REGISTO SUBST."); // Título
+finalContentArray.push(["Tempo (MM:SS)", "Estado", "Tipo de Evento", "Num Sai", "Nome Sai", "Num Entra", "Nome Entra"].join(delimiter)); // Cabeçalho
+finalContentArray.push(...sequentialLogLines); // Dados
+finalContentArray.push(""); 
+
+// B. SECÇÃO 3A DEPOIS (Log Completo, 7 colunas)
+finalContentArray.push("EVENTOS (LOG)"); // Título
+// 🛑 ALTERAÇÃO AQUI: Cabeçalho com apenas 7 títulos (A-G)
+finalContentArray.push(["Tempo (MM:SS)", "Estado do Relógio", "Tipo de Evento", "Num Sai", "Nome Sai", "Num Entra", "Nome Entra"].join(delimiter)); 
+
+finalContentArray.push(...logLines); // Dados
+// Este é o final da seção de log.
+
+// -------------------------------------------------------------------
+// Estas linhas criam o conteúdo do ficheiro real e o URL de download.
+// -------------------------------------------------------------------
+
+const fileContent = bom + finalContentArray.join('\n');
+            const blob = new Blob([fileContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+// -------------------------------------------------------------------
 
         // Criar timestamp com data e hora
 const now = new Date();
@@ -1107,21 +1173,35 @@ const timestamp =
 // Definir nome único do ficheiro
 a.download = `${timestamp}_Volume_de_Jogo.csv`;
 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // ----------------------------------------------------
+            // 💡 CORREÇÃO FINAL: Salvar e Restaurar playersData
+            // ----------------------------------------------------
             
-            // 5. Limpa o log após a exportação e reseta o estado.
-            logData = [];
-            stopAndReset(); 
+            // 1. SALVAR O PLANTEL ANTES DO RESET
+            // Cria uma cópia profunda (deep copy) da lista atual de jogadores.
+            const savedPlayersData = JSON.parse(JSON.stringify(playersData)); 
+
+            // 5. Limpa o log após a exportação e reseta o estado.
+            logData = [];
+            stopAndReset(); // <--- ONDE O playersData PODE SER APAGADO
+
+            // 2. RESTAURAR O PLANTEL (Sobrescreve qualquer limpeza feita pelo stopAndReset)
+            playersData = savedPlayersData; 
             
-            // Mensagem de sucesso
+            // 3. Redesenhar os botões (agora a lista playersData não está vazia)
+            renderPlayers(); 
+            
+            // Mensagem de sucesso
             subStatus.textContent =
-    `Dados exportados com sucesso!, Ficheiro criado:, ${timestamp}_Volume_de_Jogo.csv`;
+    `Dados exportados com sucesso!, Ficheiro criado:, ${timestamp}_Volume_de_Jogo.csv`;
 subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-            subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-        }
+            subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
+        } // Fecho final da função (se aplicável)
 
         // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
