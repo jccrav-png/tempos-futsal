@@ -131,25 +131,29 @@
         </div>
 
         <!-- PLACAR FIXO (STICKY HEADER) -->
-        <div id="stickyHeader" class="sticky-header bg-white pb-6 pt-2 rounded-b-2xl shadow-xl border-b border-gray-200">
-            
-            <!-- Conteúdo do placar alinhado com o padding do app (px-6) -->
-            <div class="px-6 sm:px-10">
-                <div id="scoreboardContainer" class="bg-gray-900 rounded-2xl p-3 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800 mb-2">
-                    <h2 class="text-lg font-semibold text-gray-400 mb-1">Relógio de Jogo (MM:SS)</h2>
-                    <div id="scoreboardDisplay" class="scoreboard-display">
-                        20:00
-                    </div>
-                </div>
-
-                <!-- BOTÃO PRINCIPAL: INICIAR/PAUSAR RELÓGIO (AGORA CENTRALIZADO) -->
-                <button id="toggleScoreboardBtn" onclick="toggleScoreboardRun()" 
-    class="btn-action-main bg-control-blue hover:bg-blue-600 w-full mx-auto block" 
-    disabled>
-                    Iniciar Relógio
-                </button>
+<div id="stickyHeader" class="sticky-header bg-white pb-6 pt-2 rounded-b-2xl shadow-xl border-b border-gray-200">
+    
+    <div class="px-6 sm:px-10">
+        
+        <div class="flex justify-end items-center mb-1 pt-2"> 
+            <button onclick="toggleClockLock()" class="text-gray-500 hover:text-gray-700 transition duration-150 p-1.5 rounded-full">
+                <span id="lockIcon" class="text-xl">🔓</span> 
+            </button>
+        </div>
+        <div id="scoreboardContainer" class="bg-gray-900 rounded-2xl p-3 text-center shadow-lg transition-colors duration-300 border-2 border-gray-800 mb-2">
+            <h3 class="text-lg font-semibold text-gray-400 mb-1">Relógio de Jogo (MM:SS)</h3>
+            <div id="scoreboardDisplay" class="scoreboard-display">
+                20:00
             </div>
         </div>
+
+        <button id="toggleScoreboardBtn" onclick="toggleScoreboardRun()" 
+            class="btn-action-main bg-control-blue hover:bg-blue-600 w-full mx-auto block" 
+            disabled>
+            Iniciar Relógio
+        </button>
+    </div>
+</div>
         
         <!-- MAIN CONTENT WRAPPER -->
         <div class="p-6 sm:p-10 pt-4"> <!-- Ajustei o padding-top ligeiramente -->
