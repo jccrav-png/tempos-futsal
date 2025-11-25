@@ -238,15 +238,15 @@
                             <!-- Botões dos jogadores serão injetados aqui -->
                         </div>
                         
-                        <!-- BOTÃO MARCA E BOTÃO DE SUBSTITUIÇÃO -->
+                        <!-- BOTÃO EVENTO E BOTÃO DE SUBSTITUIÇÃO -->
                         
 <div class="grid grid-cols-[120px_1fr] gap-4">
 
-    <!-- BOTÃO MARCA (coluna estreita) -->
+    <!-- BOTÃO EVENTO (coluna estreita) -->
     <button id="markBtn"
             onclick="markEvent()"
             class="btn-base py-2 text-black bg-yellow-300 hover:bg-yellow-400 text-base font-semibold rounded-md">
-        MARCA
+        EVENTO
     </button>
 
     <!-- BOTÃO CONFIRMAR SUBSTITUIÇÃO (coluna larga) -->
@@ -571,19 +571,13 @@ let selectedPlayersIn = [];  // Array de objetos (jogadores no banco)
             renderPlayers(); 
         }
 /**
- * Regista um evento de "Marca" no logData com o tempo atual do placar
+ * Regista um evento de "Evento" no logData com o tempo atual do placar
  * e atualiza o log de pré-visualização.
  */
 function markEvent() {
     // 1. Verificação: O relógio deve ter sido iniciado uma vez (mesmo que esteja parado)
-    // Usamos hasGameStarted como um fallback para garantir que o log não está vazio,
-    // embora no seu código actual possa ser mais simples usar 'playersData.length === 0'
-    // Para simplificar, vou usar apenas uma verificação de playersData, já que o relógio 
-    // só inicia se houver jogadores. Se quiser uma verificação mais estrita (como no passo 1),
-    // terá de definir uma variável global 'hasGameStarted' a TRUE quando o relógio iniciar.
-    // Usaremos a verificação de jogadores por agora:
     if (playersData.length === 0) {
-        subStatus.textContent = "ERRO: Carregue os jogadores (1) e inicie o Relógio (2) antes de registar uma Marca.";
+        subStatus.textContent = "ERRO: Carregue os jogadores (1) e inicie o Relógio (2) antes de registar um Evento.";
         subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
         return;
     }
@@ -592,71 +586,71 @@ function markEvent() {
     const eventTime = scoreboardDisplay.textContent;
     const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
 
-    // 2. Criar o registo de evento de marca
+    // 2. Criar o registo de evento (Note que o 'type' interno continua a ser 'mark')
     logData.push({
-        type: 'mark', // NOVO TIPO
+        type: 'mark', 
         time: eventTime,
         status: currentStatus,
         detail: {
-            event: 'Marca' // Detalhe simples para o log
+            event: 'Evento' // Detalhe simples para o log
         }
     });
 
     // 3. Atualizar a pré-visualização do log e o feedback de estado
     updateLogPreview(
-        `Marca registada em ${eventTime}`,
+        `Evento registado em ${eventTime}`, // <-- CORRIGIDO AQUI
         'mark',
         currentStatus
     );
 
     // 4. Feedback visual
-    subStatus.textContent = `Marca registada com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
+    subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`; // <-- CORRIGIDO AQUI
     subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
 }
         
-        /**
-         * Para o cronómetro, a deteção e reinicia o tempo e o log.
-         * @param {boolean} isEndOfGame - Se TRUE, é uma paragem automática por fim do tempo.
-         */
-        function stopAndReset(isEndOfGame = false) {
-            // 1. Para os intervalos
-            clearInterval(scoreboardInterval);
-            scoreboardInterval = null;
-            isScoreboardRunning = false;
-            
-            // 2. Para o ciclo de deteção contínua (se estiver a correr)
-            stopContinuousDetection(); 
-            
-            // 3. Reseta o tempo com base na configuração atual
-            updateTimeConfiguration(); 
+       /**
+ * Para o cronómetro, a deteção e reinicia o tempo e o log.
+ * @param {boolean} isEndOfGame - Se TRUE, é uma paragem automática por fim do tempo.
+ */
+function stopAndReset(isEndOfGame = false) {
+    // 1. Para os intervalos
+    clearInterval(scoreboardInterval);
+    scoreboardInterval = null;
+    isScoreboardRunning = false;
+    
+    // 2. Para o ciclo de deteção contínua (se estiver a correr)
+    stopContinuousDetection(); 
+    
+    // 3. Reseta o tempo com base na configuração atual
+    updateTimeConfiguration(); 
 
-            // 4. Atualiza os botões
-            toggleScoreboardBtn.disabled = playersData.length === 0; 
-            stopResetBtn.disabled = true;
+    // 4. Atualiza os botões
+    toggleScoreboardBtn.disabled = playersData.length === 0; 
+    stopResetBtn.disabled = true;
 
-            // Limpa a seleção de substituição ÚNICA
-            selectedPlayerOut = null;
-            selectedPlayerIn = null;
-            
-            // 5. Reseta os totais de tempo para cada jogador
-            playersData.forEach(p => p.totalCourtTimeSeconds = 0); 
+    // CORREÇÃO: Limpa a seleção de substituição MÚLTIPLA
+    selectedPlayersOut = []; // Limpa a seleção de saída
+    selectedPlayersIn = [];  // Limpa a seleção de entrada
+    
+    // 5. Reseta os totais de tempo para cada jogador
+    playersData.forEach(p => p.totalCourtTimeSeconds = 0); 
 
-            // 6. Atualiza o log e o status
-            if (isEndOfGame) {
-                logPreview.innerHTML = `<div class="text-red-700 font-semibold">FIM DO JOGO: O registo de dados parou. Total de ${logData.length} eventos registados.</div><div class="text-sm text-gray-500">Exporte no ponto 4 para limpar o log.</div>`;
-                subStatus.textContent = "FIM DO JOGO. Exportar dados (4) ou carregar novos jogadores (1).";
-            } else {
-                 logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema PARADO e REINICIADO.</div><div class="text-sm text-gray-500">O Registo de Deteção está INATIVO. Clique em "Iniciar Relógio" (topo) para começar o registo de tempo/estado.</div>`;
-                 subStatus.textContent = "Sistema pronto. Selecione 5 jogadores (3) e depois inicie o Relógio (topo).";
-            }
-            
-            // Garante que o fundo volta a ser preto (estado inicial/parado)
-            scoreboardContainer.classList.remove('bg-amber-500');
-            scoreboardContainer.classList.add('bg-gray-900');
-            subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
+    // 6. Atualiza o log e o status
+    if (isEndOfGame) {
+        logPreview.innerHTML = `<div class="text-red-700 font-semibold">FIM DO JOGO: O registo de dados parou. Total de ${logData.length} eventos registados.</div><div class="text-sm text-gray-500">Exporte no ponto 4 para limpar o log.</div>`;
+        subStatus.textContent = "FIM DO JOGO. Exportar dados (4) ou carregar novos jogadores (1).";
+    } else {
+        logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema PARADO e REINICIADO.</div><div class="text-sm text-gray-500">O Registo de Deteção está INATIVO. Clique em "Iniciar Relógio" (topo) para começar o registo de tempo/estado.</div>`;
+        subStatus.textContent = "Sistema pronto. Selecione 5 jogadores (3) e depois inicie o Relógio (topo).";
+    }
+    
+    // Garante que o fundo volta a ser preto (estado inicial/parado)
+    scoreboardContainer.classList.remove('bg-amber-500');
+    scoreboardContainer.classList.add('bg-gray-900');
+    subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
 
-            renderPlayers();
-        }
+    renderPlayers();
+}
 
 
         // --- FUNÇÕES DE CONFIGURAÇÃO DO PLANTEL ---
@@ -1214,7 +1208,7 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
         previousClockStatus = currentClockStatus;
         
         // --- COLUNAS 1-7 (MANTIDAS COMO FORMATO ORIGINAL) ---
-        typeCol = "Marca"; // Tipo de Evento (Coluna C)
+        typeCol = "Evento"; // Tipo de Evento (Coluna C)
         statusCol = ""; // Estado do Relógio (Coluna B - vazio para Marca)
         
         // Deixa as colunas de substituição vazias
