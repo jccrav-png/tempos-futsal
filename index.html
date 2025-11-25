@@ -238,14 +238,26 @@
                             <!-- Botões dos jogadores serão injetados aqui -->
                         </div>
                         
-                        <!-- BOTÃO DE SUBSTITUIÇÃO -->
-                        <button id="confirmSubBtn" onclick="confirmSubstitution()" disabled class="btn-base w-full py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg">
-                            CONFIRMAR SUBSTITUIÇÃO
-                        </button>
+                        <!-- BOTÃO MARCA E BOTÃO DE SUBSTITUIÇÃO -->
+                        
+<div class="grid grid-cols-[120px_1fr] gap-4">
 
-                    </div>
-                </div>
-            </div>
+    <!-- BOTÃO MARCA (coluna estreita) -->
+    <button id="markBtn"
+            onclick="markEvent()"
+            class="btn-base py-2 text-black bg-yellow-300 hover:bg-yellow-400 text-base font-semibold rounded-md">
+        MARCA
+    </button>
+
+    <!-- BOTÃO CONFIRMAR SUBSTITUIÇÃO (coluna larga) -->
+    <button id="confirmSubBtn"
+            onclick="confirmSubstitution()"
+            disabled
+            class="btn-base py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg rounded-md">
+        CONFIRMAR SUBSTITUIÇÃO
+    </button>
+
+</div>
             
             <!-- SECÇÃO DE LOGS E EXPORTAÇÃO (No Fundo) -->
             <div class="mt-8">
@@ -284,9 +296,10 @@
         // Estrutura de Log: { type: 'status' | 'sub' | 'initial_lineup', time: 'MM:SS', status: 'Andar' | 'Parado', detail: {...} }
         let logData = []; 
         
-        // Variáveis para guardar a substituição única (jogador/null)
-        let selectedPlayerOut = null; 
-        let selectedPlayerIn = null; 
+        // Variáveis para guardar a substituição multipla
+       let selectedPlayersOut = []; // Array de objetos (jogadores em campo)
+let selectedPlayersIn = [];  // Array de objetos (jogadores no banco)
+
         // Cada jogador agora inclui 'totalCourtTimeSeconds' para calcular o tempo total
         let playersData = []; 
 
@@ -557,6 +570,49 @@
             // Atualiza o estado da UI (para ativar/desativar substituições)
             renderPlayers(); 
         }
+/**
+ * Regista um evento de "Marca" no logData com o tempo atual do placar
+ * e atualiza o log de pré-visualização.
+ */
+function markEvent() {
+    // 1. Verificação: O relógio deve ter sido iniciado uma vez (mesmo que esteja parado)
+    // Usamos hasGameStarted como um fallback para garantir que o log não está vazio,
+    // embora no seu código actual possa ser mais simples usar 'playersData.length === 0'
+    // Para simplificar, vou usar apenas uma verificação de playersData, já que o relógio 
+    // só inicia se houver jogadores. Se quiser uma verificação mais estrita (como no passo 1),
+    // terá de definir uma variável global 'hasGameStarted' a TRUE quando o relógio iniciar.
+    // Usaremos a verificação de jogadores por agora:
+    if (playersData.length === 0) {
+        subStatus.textContent = "ERRO: Carregue os jogadores (1) e inicie o Relógio (2) antes de registar uma Marca.";
+        subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
+        return;
+    }
+    
+    // Obtém o tempo atual e o estado do relógio
+    const eventTime = scoreboardDisplay.textContent;
+    const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
+
+    // 2. Criar o registo de evento de marca
+    logData.push({
+        type: 'mark', // NOVO TIPO
+        time: eventTime,
+        status: currentStatus,
+        detail: {
+            event: 'Marca' // Detalhe simples para o log
+        }
+    });
+
+    // 3. Atualizar a pré-visualização do log e o feedback de estado
+    updateLogPreview(
+        `Marca registada em ${eventTime}`,
+        'mark',
+        currentStatus
+    );
+
+    // 4. Feedback visual
+    subStatus.textContent = `Marca registada com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
+    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+}
         
         /**
          * Para o cronómetro, a deteção e reinicia o tempo e o log.
@@ -674,176 +730,235 @@
             renderPlayers(); 
         }
 
-        // --- FUNÇÕES DE SUBSTITUIÇÃO ---
+ // --- FUNÇÕES DE SUBSTITUIÇÃO (RENOVADAS PARA SELEÇÃO MÚLTIPLA) ---
 
-        function renderPlayers() {
-            playerContainer.innerHTML = '';
-            const courtCount = playersData.filter(p => p.court).length;
-            const isInitialSelection = playersData.length > 0 && courtCount < 5;
+function renderPlayers() {
+    playerContainer.innerHTML = '';
+    const courtCount = playersData.filter(p => p.court).length;
+    
+    playersData.forEach(player => {
+        const btn = document.createElement('button');
+        btn.className = `player-btn`;
+        btn.textContent = `${player.number} - ${player.name}`;
+        btn.onclick = () => handlePlayerClick(player.number);
+        
+        // -------------------------------------------------------------------
+        // NOVA LÓGICA DE CLASSE (MÚLTIPLA SELEÇÃO)
+        // -------------------------------------------------------------------
+        
+        // Verificar se o jogador está selecionado para entrar ou sair
+        const isSelectedOut = selectedPlayersOut.some(p => p.number === player.number);
+        const isSelectedIn = selectedPlayersIn.some(p => p.number === player.number);
 
-            playersData.forEach(player => {
-                const btn = document.createElement('button');
-                btn.className = `player-btn`;
-                btn.textContent = `${player.number} - ${player.name}`;
-                btn.onclick = () => handlePlayerClick(player.number);
-                
-                let playerClass = player.court ? 'player-court' : 'player-bench';
+        let playerClass = 'player-bench'; // Default para banco (cinzento)
 
-                // Verificar seleção ÚNICA
-                const isOut = selectedPlayerOut === player;
-                const isIn = selectedPlayerIn === player;
+        if (player.court) {
+            // JOGADOR EM CAMPO (VERDE)
+            playerClass = 'player-court';
+            if (isSelectedOut) {
+                // Selecionado para sair (AMARELO)
+                playerClass = 'player-out-select';
+            }
+        } else {
+            // JOGADOR NO BANCO (CINZENTO)
+            playerClass = 'player-bench';
+            if (isSelectedIn) {
+                // Selecionado para entrar (AZUL CLARO)
+                playerClass = 'player-in-select';
+            }
+        }
+        // -------------------------------------------------------------------
+        
+        btn.classList.add(playerClass);
+        playerContainer.appendChild(btn);
+    });
+    
+    // Chama a nova função de status
+    updateSubstitutionStatus();
+}
 
-                if (isOut) {
-                    playerClass = 'player-out-select';
-                } else if (isIn) {
-                    playerClass = 'player-in-select';
-                }
+/**
+ * Nova função para atualizar a mensagem de estado e o botão de confirmação.
+ * Substitui a antiga updateSubStatus().
+ */
+function updateSubstitutionStatus() {
+    const outCount = selectedPlayersOut.length;
+    const inCount = selectedPlayersIn.length;
+    const courtCount = playersData.filter(p => p.court).length;
+    const isInitialSelection = playersData.length > 0 && courtCount < 5;
 
-                btn.classList.add(playerClass);
-                playerContainer.appendChild(btn);
-            });
-            updateSubStatus(courtCount, isInitialSelection);
+    confirmSubBtn.disabled = true; // Desativar por defeito
+    confirmSubBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    confirmSubBtn.classList.remove('opacity-100', 'cursor-pointer');
+    
+    // Resetar classes de cor da mensagem de estado
+    subStatus.classList.remove('bg-red-50', 'bg-yellow-50', 'bg-indigo-50', 'bg-green-50', 'bg-amber-100', 'bg-green-100', 'bg-red-100');
+    subStatus.classList.remove('border-red-500', 'border-yellow-500', 'border-indigo-500', 'border-green-500', 'border-amber-500', 'border-green-500', 'border-red-500');
+
+    // 1. Sem dados carregados
+    if (playersData.length === 0) {
+        subStatus.textContent = "Por favor, carregue os jogadores no ponto 1 (Configuração do Plantel).";
+        subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
+    
+    // 2. Seleção Inicial (antes de começar o jogo)
+    } else if (isInitialSelection) {
+        subStatus.textContent = `Selecione os 5 jogadores iniciais. (Em campo: ${courtCount}/5)`;
+        subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
+        
+        if (courtCount === 5) {
+             subStatus.textContent = "5 Iniciais selecionados! O Relógio pode ser iniciado (topo).";
+             subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
         }
 
-        function updateSubStatus(courtCount, isInitialSelection) {
-            // Contagem e estado único
-            const isReady = selectedPlayerOut !== null && selectedPlayerIn !== null && selectedPlayerOut !== selectedPlayerIn;
-            
-            confirmSubBtn.disabled = !isReady;
-            confirmSubBtn.classList.toggle('opacity-50', !isReady);
-            confirmSubBtn.classList.toggle('cursor-not-allowed', !isReady);
-            confirmSubBtn.classList.toggle('opacity-100', isReady);
-            confirmSubBtn.classList.toggle('cursor-pointer', isReady);
-            
-            subStatus.classList.remove('bg-red-50', 'bg-yellow-50', 'bg-indigo-50', 'bg-green-50');
-            subStatus.classList.remove('border-red-500', 'border-yellow-500', 'border-indigo-500', 'border-green-500');
-
-            if (playersData.length === 0) {
-                subStatus.textContent = "Por favor, carregue os jogadores no ponto 1 (Configuração do Plantel).";
-                subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
-            }
-            else if (isInitialSelection) {
-                subStatus.textContent = `Selecione os 5 jogadores iniciais. (Em campo: ${courtCount}/5)`;
-                subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
-                
-                if (courtCount === 5) {
-                    subStatus.textContent = "5 Iniciais selecionados! O Relógio pode ser iniciado (topo). Agora, clique no jogador que SAIR (verde) e no que ENTRAR (cinzento).";
-                    subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-                }
-            } else if (selectedPlayerOut || selectedPlayerIn) {
-                if (isReady) {
-                    subStatus.textContent = `SUBSTITUIÇÃO PRONTA: ${selectedPlayerOut.name} (#${selectedPlayerOut.number}) SAIR >> ${selectedPlayerIn.name} (#${selectedPlayerIn.number}) ENTRAR. Clique em CONFIRMAR.`;
-                    subStatus.className = 'status-message bg-yellow-50 border-yellow-500 text-yellow-800';
-                } else if (selectedPlayerOut && !selectedPlayerIn) {
-                    subStatus.textContent = `SELECIONADO: ${selectedPlayerOut.name} (#${selectedPlayerOut.number}) para SAIR. Falta selecionar o jogador para ENTRAR (cinzento).`;
-                    subStatus.className = 'status-message bg-red-50 border-red-500 text-red-800';
-                } else if (!selectedPlayerOut && selectedPlayerIn) {
-                    subStatus.textContent = `SELECIONADO: ${selectedPlayerIn.name} (#${selectedPlayerIn.number}) para ENTRAR. Falta selecionar o jogador para SAIR (verde).`;
-                    subStatus.className = 'status-message bg-red-50 border-red-500 text-red-800';
-                }
-            } else if (courtCount === 5) {
-                // Caso a seleção inicial já esteja feita (courtCount == 5)
-                subStatus.textContent = "Clique no jogador EM CAMPO (verde) para iniciar a substituição.";
-                subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
-            }
-            
-            // Estado adicional para indicar o estado do Placar/Registo
-            if (isScoreboardRunning) {
-                 subStatus.textContent = `Relógio ATIVO (${isCountingUp ? 'Crescente' : 'Decrescente'}). Selecione o jogador para SAIR (verde) e para ENTRAR (cinzento).`;
-                 subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
-            } 
+    // 3. Em Modo de Substituição
+    } else {
+        // A. Relógio parado (Não permite substituições após a seleção inicial)
+        if (!isScoreboardRunning) {
+            subStatus.textContent = "Relógio PARADO. Inicie o relógio antes de fazer substituições.";
+            subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
+            return;
         }
 
-        function handlePlayerClick(playerNumber) {
-            const player = playersData.find(p => p.number === playerNumber);
-            const courtCount = playersData.filter(p => p.court).length;
-            const isInitialSelection = playersData.length > 0 && courtCount < 5;
-
-            if (isInitialSelection) {
-                // Modo de seleção inicial (3. Controlo de Substituições)
-                if (player.court) {
-                    player.court = false; 
-                } else if (courtCount < 5) {
-                    player.court = true; 
-                }
-                renderPlayers();
-                return;
-            }
+        // B. Contagem de Substituições
+        if (outCount === 0 && inCount === 0) {
+            // Nada selecionado
+            subStatus.textContent = "Relógio ATIVO. Clique no jogador EM CAMPO (verde) para iniciar a substituição.";
+            subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
+        } else if (outCount !== inCount) {
+            // Contagem incompatível
+            subStatus.textContent = `SELEÇÃO INCOMPLETA: ${outCount} a sair e ${inCount} a entrar. As contagens têm de ser iguais para confirmar.`;
+            subStatus.className = 'status-message bg-amber-100 border-amber-500 text-amber-800';
+        } else if (outCount > 0 && outCount === inCount) {
+            // Pronto a confirmar
+            subStatus.textContent = `PRONTO A CONFIRMAR: ${outCount} troca(s) selecionada(s). Clique em 'Confirmar Troca(s)' para registar.`;
+            subStatus.className = 'status-message bg-green-100 border-green-500 text-green-800';
             
-            // Só permite substituições se houver 5 em campo
-            if (courtCount !== 5) return;
+            confirmSubBtn.disabled = false;
+            confirmSubBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            confirmSubBtn.classList.add('opacity-100', 'cursor-pointer');
+        }
+    }
+}
 
-            // Modo de substituição ÚNICA
-            if (player.court) {
-                // Jogador EM CAMPO -> Clicado para SAIR (Out)
-                if (selectedPlayerOut === player) {
-                    selectedPlayerOut = null; // Desselecionar se clicar no mesmo
-                } else if (selectedPlayerOut === null) {
-                    selectedPlayerOut = player;
-                    // Garante que o jogador que sai não está selecionado para entrar
-                    if (selectedPlayerIn === player) selectedPlayerIn = null;
-                } else {
-                    // Já tem um selecionado, substitui-o
-                    selectedPlayerOut = player;
-                    if (selectedPlayerIn === player) selectedPlayerIn = null;
-                }
-            } else {
-                // Jogador NO BANCO -> Clicado para ENTRAR (In)
-                if (selectedPlayerIn === player) {
-                    selectedPlayerIn = null; // Desselecionar se clicar no mesmo
-                } else if (selectedPlayerIn === null) {
-                    selectedPlayerIn = player;
-                    // Garante que o jogador que entra não está selecionado para sair
-                    if (selectedPlayerOut === player) selectedPlayerOut = null;
-                } else {
-                    // Já tem um selecionado, substitui-o
-                    selectedPlayerIn = player;
-                    if (selectedPlayerOut === player) selectedPlayerOut = null;
-                }
-            }
-            renderPlayers();
+
+function handlePlayerClick(playerNumber) {
+    const player = playersData.find(p => p.number === playerNumber);
+    const courtCount = playersData.filter(p => p.court).length;
+    const isInitialSelection = playersData.length > 0 && courtCount < 5;
+
+    // 1. MODO DE SELEÇÃO INICIAL (5 INICIAIS)
+    if (isInitialSelection) {
+        if (player.court) {
+            player.court = false; 
+        } else if (courtCount < 5) {
+            player.court = true; 
+        }
+        renderPlayers();
+        return;
+    }
+    
+    // Só permite substituições se houver 5 em campo
+    if (courtCount !== 5 || !isScoreboardRunning) return;
+
+    // 2. MODO DE SUBSTITUIÇÃO MÚLTIPLA
+
+    // Jogador EM CAMPO (Para Sair)
+    if (player.court) {
+        const index = selectedPlayersOut.findIndex(p => p.number === player.number);
+        
+        if (index > -1) {
+            // Se já estava selecionado, remove-o (desselecionar)
+            selectedPlayersOut.splice(index, 1);
+        } else {
+            // Se não estava selecionado, adiciona-o
+            // Garante que o jogador que sai não está selecionado para entrar
+            const indexIn = selectedPlayersIn.findIndex(p => p.number === player.number);
+            if (indexIn > -1) selectedPlayersIn.splice(indexIn, 1);
+            
+            selectedPlayersOut.push(player);
         }
 
-        function confirmSubstitution() {
-            // Substituição única
-            if (!selectedPlayerOut || !selectedPlayerIn || selectedPlayerOut === selectedPlayerIn) {
-                console.error("Erro: Substituição incompleta ou inválida.");
-                return;
-            }
+    // Jogador NO BANCO (Para Entrar)
+    } else {
+        const index = selectedPlayersIn.findIndex(p => p.number === player.number);
+        
+        if (index > -1) {
+            // Se já estava selecionado, remove-o (desselecionar)
+            selectedPlayersIn.splice(index, 1);
+        } else {
+            // Se não estava selecionado, adiciona-o
+            // Garante que o jogador que entra não está selecionado para sair
+            const indexOut = selectedPlayersOut.findIndex(p => p.number === player.number);
+            if (indexOut > -1) selectedPlayersOut.splice(indexOut, 1);
             
-            const playerOut = selectedPlayerOut;
-            const playerIn = selectedPlayerIn;
-            const eventTime = scoreboardDisplay.textContent;
-            
-            // 1. Atualizar o estado do jogo (playersData)
-            playerOut.court = false;
-            playerIn.court = true;
+            selectedPlayersIn.push(player);
+        }
+    }
 
-            // 2. Criar o registo de evento de substituição
-            logData.push({
-                type: 'sub', 
-                time: eventTime, 
-                status: isScoreboardRunning ? 'Andar' : 'Parado', 
-                detail: {
-                    out_no: playerOut.number,
-                    out_name: playerOut.name,
-                    in_no: playerIn.number,
-                    in_name: playerIn.name
-                }
-            });
-            
-            // 3. Atualizar a pré-visualização
+    // Atualizar UI
+    renderPlayers();
+}
+
+
+function confirmSubstitution() {
+    const outCount = selectedPlayersOut.length;
+    const inCount = selectedPlayersIn.length;
+    
+    // Validação
+    if (outCount === 0 || outCount !== inCount) {
+        updateSubstitutionStatus();
+        return;
+    }
+
+    // Processar cada substituição individualmente
+    const eventTime = scoreboardDisplay.textContent;
+    const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
+
+    for (let i = 0; i < outCount; i++) {
+        const playerOut = selectedPlayersOut[i];
+        const playerIn = selectedPlayersIn[i];
+
+        // 1. Atualizar o estado do court no playersData (sempre diretamente no objeto)
+        const realPlayerOut = playersData.find(p => p.number === playerOut.number);
+        const realPlayerIn = playersData.find(p => p.number === playerIn.number);
+
+        if (realPlayerOut) realPlayerOut.court = false; // Sai do campo
+        if (realPlayerIn) realPlayerIn.court = true;   // Entra no campo
+
+        // 2. Registo no logData (UMA LINHA POR TROCA, para manter o CSV correto)
+        logData.push({
+            type: 'sub',
+            time: eventTime,
+            status: currentStatus,
+            detail: {
+                out_no: playerOut.number,
+                out_name: playerOut.name,
+                in_no: playerIn.number,
+                in_name: playerIn.name,
+            }
+        });
+
+        // 3. Atualizar a pré-visualização (Apenas a primeira troca para feedback rápido)
+        if (i === 0) {
             updateLogPreview(
-                `SUB: ${playerOut.name} (#${playerOut.number}) >> ${playerIn.name} (#${playerIn.number})`,
+                `${playerOut.name} (#${playerOut.number}) ↔ ${playerIn.name} (#${playerIn.number}) [e mais ${outCount - 1}]`,
                 'sub',
-                isScoreboardRunning ? 'Andar' : 'Parado'
+                currentStatus
             );
-            
-            // 4. Limpar o estado de seleção
-            selectedPlayerOut = null;
-            selectedPlayerIn = null;
-            renderPlayers();
         }
+    }
+    
+    // 4. Resetar e atualizar a UI
+    selectedPlayersOut = [];
+    selectedPlayersIn = [];
+    
+    // Feedback final
+    const finalMessage = `SUCESSO: ${outCount} troca(s) registada(s) em ${eventTime}.`;
+    subStatus.textContent = finalMessage;
+    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+
+    renderPlayers(); // Redesenhar e limpar os destaques
+}
         
         // --- FUNÇÃO DE CÁLCULO DE TEMPO TOTAL EM CAMPO ---
         
@@ -931,36 +1046,44 @@
         }
 
 
-        // --- FUNÇÕES DE LOG E EXPORTAÇÃO ---
+// --- FUNÇÕES DE LOG E EXPORTAÇÃO ---
 
-        function updateLogPreview(content, type, status = '') {
-            const previewEntry = document.createElement('div');
-            
-            if (type === 'time') {
-                const isStatusChange = (status === 'Parado' || status === 'Andar');
-                if (isStatusChange) {
-                     previewEntry.className = 'text-primary-red font-semibold py-1 border-b border-red-100';
-                     previewEntry.textContent = `[ESTADO ATUALIZADO] ${status.toUpperCase()} em ${content}`;
-                } else {
-                    // Ignora o log de tempo a cada segundo para manter o histórico mais limpo,
-                    // focando apenas nas mudanças de estado ou substituições.
-                    return; 
-                }
-            } else if (type === 'sub') {
-                previewEntry.className = 'p-1 my-1 rounded bg-blue-100 text-blue-800 border-l-2 border-blue-500 font-semibold';
-                previewEntry.textContent = `[${status.toUpperCase()}] Substituição: ${content}`;
-            } else if (type === 'initial_lineup') {
-                 previewEntry.className = 'p-1 my-1 rounded bg-green-100 text-green-800 border-l-2 border-green-500 font-semibold';
-                 previewEntry.textContent = `[INÍCIO] Escalação inicial registada em ${content}`;
-            }
-
-            logPreview.prepend(previewEntry);
-            
-            // Limitar o número de entradas para manter o log limpo
-            while (logPreview.children.length > 15) {
-                logPreview.removeChild(logPreview.lastChild);
-            }
+function updateLogPreview(content, type, status = '') {
+    const previewEntry = document.createElement('div');
+    
+    if (type === 'time') {
+        const isStatusChange = (status === 'Parado' || status === 'Andar');
+        if (isStatusChange) {
+            previewEntry.className = 'text-primary-red font-semibold py-1 border-b border-red-100';
+            previewEntry.textContent = `[ESTADO ATUALIZADO] ${status.toUpperCase()} em ${content}`;
+        } else {
+            // Ignora o log de tempo a cada segundo para manter o histórico mais limpo,
+            // focando apenas nas mudanças de estado ou substituições.
+            return; 
         }
+    } else if (type === 'sub') {
+        previewEntry.className = 'p-1 my-1 rounded bg-blue-100 text-blue-800 border-l-2 border-blue-500 font-semibold';
+        previewEntry.textContent = `[${status.toUpperCase()}] Substituição: ${content}`;
+    } else if (type === 'initial_lineup') {
+        previewEntry.className = 'p-1 my-1 rounded bg-green-100 text-green-800 border-l-2 border-green-500 font-semibold';
+        previewEntry.textContent = `[INÍCIO] Escalação inicial registada em ${content}`;
+    }
+    
+    // NOVO: Adicione este bloco para o evento 'mark'
+    // ----------------------------------------------------------------------
+    else if (type === 'mark') {
+         previewEntry.className = 'p-1 my-1 rounded bg-yellow-100 text-yellow-800 border-l-2 border-yellow-500 font-semibold';
+         previewEntry.textContent = `[${status.toUpperCase()}] MARCA: ${content}`;
+    }
+    // ----------------------------------------------------------------------
+
+    logPreview.prepend(previewEntry);
+    
+    // Limitar o número de entradas para manter o log limpo
+    while (logPreview.children.length > 15) {
+        logPreview.removeChild(logPreview.lastChild);
+    }
+}
 
         /**
          * Exporta os dados registados para um ficheiro CSV.
@@ -1051,7 +1174,7 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
     let inNum = "";
     let inName = "";
 
-    // 🛑 Colunas 8-14 (H-N) NÃO SÃO MAIS INICIALIZADAS NEM USADAS.
+   // 🛑 Colunas 8-14 (H-N) NÃO SÃO MAIS INICIALIZADAS NEM USADAS.
     // -------------------------------------------------------------
 
     if (entry.type === 'status') {
@@ -1080,9 +1203,27 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
         outNum = d.out_no;
         outName = d.out_name;
         inNum = d.in_no;    
-        inName = d.in_name; 
+        inName = d.in_name;  
         
+    } 
+    // -----------------------------------------------------------
+    // NOVO BLOCO PARA EVENTO 'MARK' (INSERÇÃO)
+    // -----------------------------------------------------------
+    else if (entry.type === 'mark') {
+        // Reinicia o estado do relógio
+        previousClockStatus = currentClockStatus;
+        
+        // --- COLUNAS 1-7 (MANTIDAS COMO FORMATO ORIGINAL) ---
+        typeCol = "Marca"; // Tipo de Evento (Coluna C)
+        statusCol = ""; // Estado do Relógio (Coluna B - vazio para Marca)
+        
+        // Deixa as colunas de substituição vazias
+        outNum = "";
+        outName = "";
+        inNum = "";    
+        inName = "";  
     }
+    // -----------------------------------------------------------
     
     // 🛑 Combina apenas as 7 colunas (A a G) usando o delimitador
     return [
@@ -1090,8 +1231,7 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
     ].join(delimiter);
     
 // 🛑 Remove linhas vazias (agora são 7 colunas, logo 6 delimitadores)
-}).filter(line => line.trim() !== delimiter.repeat(6)); 
-
+}).filter(line => line.trim() !== delimiter.repeat(6));
 
 // --------------------------------------------------------
 // 2. CÁLCULO DA SECÇÃO 3B: Log Sequencial (7 colunas - H a N)
