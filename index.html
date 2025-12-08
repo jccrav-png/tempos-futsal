@@ -342,7 +342,8 @@
         let isDetectionRunning = false; // Flag para o ciclo de deteção
         
         // Estrutura de Log: { type: 'status' | 'sub' | 'initial_lineup', time: 'MM:SS', status: 'Andar' | 'Parado', detail: {...} }
-        let logData = []; 
+        let logData = [];
+        let restoringFromMemory = false; 
         
         // Variáveis para guardar a substituição multipla
        let selectedPlayersOut = []; // Array de objetos (jogadores em campo)
@@ -408,23 +409,29 @@ let possessionLog = []; // cada item: {team, start, end, duration}
         }
         
         // --- FUNÇÃO PARA APLICAR PRESET ---
-        function applyPreset() {
-            const preset = timePresetSelect.value;
+function applyPreset() {
+
+    if (restoringFromMemory) {
+        restoringFromMemory = false;
+        return;
+    }
+
+    const preset = timePresetSelect.value;
             
-            if (preset === 'futsal') {
-                initialMinutesInput.value = 20;
-                initialSecondsInput.value = 0;
-                timeDirectionSelect.value = 'down';
-                initialMinutesInput.max = 60; // Max razoável para minutos de jogo
-            } else if (preset === 'corrido') {
-                initialMinutesInput.value = 0; // Inicia em 0:00 por padrão, mas pode ser alterado
-                initialSecondsInput.value = 0;
-                timeDirectionSelect.value = 'up';
-                initialMinutesInput.max = 145; // Max 145 minutos, conforme pedido
-            }
-            // Chama a função principal de configuração para aplicar e resetar
-            updateTimeConfiguration(); 
-        }
+    if (preset === 'futsal') {
+        initialMinutesInput.value = 20;
+        initialSecondsInput.value = 0;
+        timeDirectionSelect.value = 'down';
+        initialMinutesInput.max = 60;
+    } else if (preset === 'corrido') {
+        initialMinutesInput.value = 0;
+        initialSecondsInput.value = 0;
+        timeDirectionSelect.value = 'up';
+        initialMinutesInput.max = 145;
+    }
+    
+    updateTimeConfiguration();
+}
 
 
         /**
@@ -486,8 +493,13 @@ let possessionLog = []; // cada item: {team, start, end, duration}
                  subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
             }
             scoreboardContainer.classList.remove('bg-amber-500');
-            scoreboardContainer.classList.add('bg-gray-900');
-        }
+scoreboardContainer.classList.add('bg-gray-900');
+
+// Guardar última configuração no localStorage
+localStorage.setItem('last_time_mode', timeDirectionSelect.value);
+localStorage.setItem('last_minutes', initialMinutesInput.value);
+localStorage.setItem('last_seconds', initialSecondsInput.value);
+}
 
 
         // --- FUNÇÕES DE CONTROLO DE DETEÇÃO (Registo Contínuo) ---
@@ -1230,9 +1242,12 @@ function updateLogPreview(content, type, status = '') {
             
             // FECHAR posse ativa antes de exportar
 if (possessionActive && possessionStartSeconds !== null) {
-    const endStr = scoreboardDisplay.textContent;
-    const endSec = timeToSeconds(endStr);
+
+    const endStrRaw = scoreboardDisplay.textContent; // o que está no placar
+    const endSec = timeToSeconds(endStrRaw); // converter para segundos
     const duration = Math.abs(endSec - possessionStartSeconds);
+
+    const endStr = formatSecondsToTime(endSec); // formatar MM:SS
 
     possessionLog.push({
         team: possessionActive,
@@ -1255,22 +1270,7 @@ const bom = "\uFEFF";
 
 const finalContentArray = [];
 
-// --------------------------------------------------------
-// SECÇÃO POSSE DE BOLA (NOVA)
-// --------------------------------------------------------
-finalContentArray.push("POSSE DE BOLA");
-finalContentArray.push(["TM", "Início", "Fim", "Duração (seg)"].join(delimiter));
 
-possessionLog.forEach(p => {
-    finalContentArray.push([
-        p.team,
-        p.start,
-        p.end,
-        p.duration
-    ].join(delimiter));
-});
-
-finalContentArray.push(""); // linha vazia separadora
 
 // --------------------------------------------------------
 // SECÇÃO 1: ESCALAÇÃO INICIAL
@@ -1318,6 +1318,26 @@ finalContentArray.push(""); // Linha de separação
             });
             finalContentArray.push(...timeSummaryLines);
             finalContentArray.push(""); // Linha de separação
+        
+// --------------------------------------------------------
+// SECÇÃO POSSE DE BOLA (NOVA)
+// --------------------------------------------------------
+finalContentArray.push("POSSE DE BOLA");
+finalContentArray.push(["TM", "Início", "Fim", "Duração (seg)"].join(delimiter));
+
+possessionLog.forEach(p => {
+
+    const teamLabel = (p.team === "A") ? "TEAM_A" : "TEAM_B";
+
+    finalContentArray.push([
+        teamLabel,
+        p.start,
+        p.end,
+        p.duration
+    ].join(delimiter));
+});
+
+finalContentArray.push(""); // linha vazia separadora
 
 // --------------------------------------------------------
 // SECÇÃO 3: REGISTO DE EVENTOS (LOG) - ORDEM INVERTIDA & H-N LIMPA
@@ -1541,10 +1561,24 @@ subStatus.className = 'status-message bg-green-50 border-green-500 text-green-80
         // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
 
+    // restaurar ultima configuração de tempo
+    const savedMode = localStorage.getItem('last_time_mode');
+    const savedMin = localStorage.getItem('last_minutes');
+    const savedSec = localStorage.getItem('last_seconds');
+
+    if (savedMode) timeDirectionSelect.value = savedMode;
+    if (savedMin) initialMinutesInput.value = savedMin;
+    if (savedSec) initialSecondsInput.value = savedSec;
+
+    // sincronizar dropdown de presets
+    if (savedMode === 'up') timePresetSelect.value = 'corrido';
+    if (savedMode === 'down') timePresetSelect.value = 'futsal';
+
     ensureTeamLines();
 
-    applyPreset(); 
-    
+    // aplicar as configurações restauradas ao relógio
+    updateTimeConfiguration();
+
     // Verifica se existe plantel guardado
     const savedList = localStorage.getItem('futsal_player_list');
 
