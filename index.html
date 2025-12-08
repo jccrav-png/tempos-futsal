@@ -106,21 +106,36 @@
             z-index: 10; /* Garante que fica por cima de outros elementos */
             width: 100%; /* Garante a largura total */
         }
-    </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-red': '#DC2626', // Vermelho do placar
-                        'control-blue': '#3B82F6', // Azul dos controlos
-                        'export-green': '#059669', // Verde da exportação
-                        'neutral-light': '#F9FAFB', // Fundo dos cards
-                    }
+        
+ /* Estilo para Visualizar botão pressionado */       
+.event-flash {
+    filter: brightness(1.4);
+    transform: scale(1.05);
+    transition: all 0.2s;
+}
+
+.team-active {
+    filter: brightness(1.25);
+    transform: scale(1.05);
+    border: 3px solid #ffea00;
+    transition: all 0.15s;
+}
+
+</style>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    'primary-red': '#DC2626',
+                    'control-blue': '#3B82F6',
+                    'export-green': '#059669',
+                    'neutral-light': '#F9FAFB',
                 }
             }
         }
-    </script>
+    }
+</script>
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8">
     <!-- Removida a padding do div#app para controlar o padding de forma mais granular nos sub-elementos -->
@@ -179,7 +194,9 @@
 13,Tiago Brito
 14,Carlinhos
 16,Bernardo Paço
-15,Outro</textarea>
+15,Outro
+100,EQUIPA A
+101,EQUIPA B</textarea>
                         <button id="loadPlayersBtn" onclick="loadPlayersFromInput()" class="btn-config mt-4 w-full text-white bg-green-600 hover:bg-green-700">
                             Carregar Jogadores
                         </button>
@@ -258,6 +275,23 @@
     </button>
 
 </div>
+
+<!-- NOVOS BOTÕES DE POSSE DE BOLA -->
+<div class="grid grid-cols-2 gap-4 mt-4">
+
+    <button id="teamABtn"
+        onclick="togglePossession('A')"
+        class="btn-base py-3 text-white bg-green-600 hover:bg-green-700 text-lg rounded-md">
+        EQUIPA A
+    </button>
+
+    <button id="teamBBtn"
+        onclick="togglePossession('B')"
+        class="btn-base py-3 text-white bg-blue-600 hover:bg-blue-700 text-lg rounded-md">
+        EQUIPA B
+    </button>
+
+</div>
             
             <!-- SECÇÃO DE LOGS E EXPORTAÇÃO (No Fundo) -->
             <div class="mt-8">
@@ -284,6 +318,20 @@
     </div>
 
     <script>
+    
+    function ensureTeamLines() {
+    let current = playerInput.value.trim();
+
+    if (!current.includes('100,')) {
+        current += '\n100,EQUIPA A';
+    }
+    if (!current.includes('101,')) {
+        current += '\n101,EQUIPA B';
+    }
+
+    playerInput.value = current;
+}
+
         // --- DADOS E ESTADO GLOBAIS ---
         let initialTotalSeconds = 1200; // Padrão 20:00
         let totalSeconds = 1200; 
@@ -301,7 +349,12 @@
 let selectedPlayersIn = [];  // Array de objetos (jogadores no banco)
 
         // Cada jogador agora inclui 'totalCourtTimeSeconds' para calcular o tempo total
-        let playersData = []; 
+        let playersData = [];
+
+        // POSSE DE BOLA
+let possessionActive = null; // "A" ou "B"
+let possessionStartSeconds = null;
+let possessionLog = []; // cada item: {team, start, end, duration}
 
         // --- ELEMENTOS DOM ---
         const scoreboardDisplay = document.getElementById('scoreboardDisplay');
@@ -604,8 +657,14 @@ function markEvent() {
     );
 
     // 4. Feedback visual
-    subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`; // <-- CORRIGIDO AQUI
-    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
+subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+
+// animação do botão
+const btn = document.getElementById('markBtn');
+btn.classList.add('event-flash');
+setTimeout(() => btn.classList.remove('event-flash'), 300);
+
 }
         
        /**
@@ -655,74 +714,81 @@ function stopAndReset(isEndOfGame = false) {
 
         // --- FUNÇÕES DE CONFIGURAÇÃO DO PLANTEL ---
 
-        function loadPlayersFromInput() {
-            const input = playerInput.value.trim();
-            const lines = input.split('\n').filter(line => line.trim() !== '');
+       function loadPlayersFromInput() {
+    const input = playerInput.value.trim();
+    const lines = input.split('\n').filter(line => line.trim() !== '');
 
-            if (lines.length === 0) {
-                subStatus.textContent = "ERRO: Introduza os dados dos jogadores (Número, Nome) no ponto 1.";
-                subStatus.className = 'status-message bg-red-50 border-red-500 text-red-800';
-                toggleScoreboardBtn.disabled = true; 
-                return;
-            }
+    if (lines.length === 0) {
+        subStatus.textContent = "ERRO: Introduza os dados dos jogadores (Número, Nome) no ponto 1.";
+        subStatus.className = 'status-message bg-red-50 border-red-500 text-red-800';
+        toggleScoreboardBtn.disabled = true; 
+        return;
+    }
 
-            // Persistência - Salvar o input no localStorage
-            localStorage.setItem('futsal_player_list', input);
+    // Persistência - Salvar o input no localStorage
+    localStorage.setItem('futsal_player_list', input);
 
-            // Limpa o estado atual e carrega novos dados
-            playersData = [];
-            let errorCount = 0;
+    // Limpa o estado atual e carrega novos dados
+    playersData = [];
+    let errorCount = 0;
 
-            lines.forEach(line => {
-                const parts = line.split(',').map(part => part.trim());
-                const number = parseInt(parts[0]);
-                const name = parts[1];
+    // LER JOGADORES DO INPUT
+    lines.forEach(line => {
+        const parts = line.split(',').map(part => part.trim());
+        const number = parseInt(parts[0]);
+        const name = parts[1];
 
-                if (isNaN(number) || number < 1 || !name) {
-                    errorCount++;
-                    return;
-                }
-
-                // Garante que o jogador está em playersData (para manter o estado court)
-                const existingPlayer = playersData.find(p => p.number === number);
-                if (!existingPlayer) {
-                    // Adiciona o novo campo para o total de tempo
-                    playersData.push({ number, name, court: false, totalCourtTimeSeconds: 0 });
-                } else {
-                    existingPlayer.name = name; // Atualiza o nome se o número for repetido
-                }
-            });
-
-            // Parar e resetar o jogo antes de um novo carregamento
-            stopAndReset(); 
-            logData = []; 
-            selectedPlayerOut = null; 
-            selectedPlayerIn = null;
-            
-            // Habilita o placar se houver jogadores
-            toggleScoreboardBtn.disabled = playersData.length === 0;
-
-            if (playersData.length > 0) {
-                 // Mensagem inicial ajustada para refletir que o log está à espera
-                 logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema iniciado com ${playersData.length} jogadores.</div><div class="text-sm text-gray-500">Selecione 5 jogadores (verde) no ponto 3 e depois clique em "Iniciar Relógio" (no topo) para começar o registo.</div>`;
-            }
-
-
-            if (playersData.length < 5) {
-                 subStatus.textContent = `AVISO: Carregou apenas ${playersData.length} jogadores. Precisa de 5 para as Substituições. Agora, selecione os jogadores.`;
-                 subStatus.className = 'status-message bg-yellow-50 border-yellow-500 text-yellow-800';
-            } else if (errorCount > 0) {
-                subStatus.textContent = `AVISO: ${playersData.length} jogadores carregados. ${errorCount} linha(s) ignorada(s). Selecione os 5 iniciais (3).`;
-                subStatus.className = 'status-message bg-yellow-50 border-yellow-500 text-yellow-800';
-            } else {
-                subStatus.textContent = `SUCESSO: ${playersData.length} jogadores carregados. Agora, selecione os 5 iniciais no ponto 3.`;
-                subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-            }
-            
-            // Garantir que todos começam no banco
-            playersData.forEach(p => p.court = false);
-            renderPlayers(); 
+        if (isNaN(number) || number < 1 || !name) {
+            errorCount++;
+            return;
         }
+
+        const existingPlayer = playersData.find(p => p.number === number);
+        if (!existingPlayer) {
+            playersData.push({ number, name, court: false, totalCourtTimeSeconds: 0 });
+        } else {
+            existingPlayer.name = name;
+        }
+    });
+
+    // Parar e resetar o jogo antes de um novo carregamento
+    stopAndReset(); 
+    logData = []; 
+    selectedPlayerOut = null; 
+    selectedPlayerIn = null;
+
+    // ADICIONAR EQUIPAS AO PLANTEL DEPOIS DO RESET
+    if (!playersData.some(p => p.number === 100)) {
+        playersData.push({ number: 101, name: 'EQUIPA A', court: false, totalCourtTimeSeconds: 0 });
+    }
+    if (!playersData.some(p => p.number === 101)) {
+        playersData.push({ number: 102, name: 'EQUIPA B', court: false, totalCourtTimeSeconds: 0 });
+    }
+
+    // Habilita o placar se houver jogadores
+    toggleScoreboardBtn.disabled = playersData.length === 0;
+
+    if (playersData.length > 0) {
+        logPreview.innerHTML = `<div class="text-indigo-700 font-semibold">Sistema iniciado com ${playersData.length} jogadores.</div><div class="text-sm text-gray-500">Selecione 5 jogadores (verde) no ponto 3 e depois clique em "Iniciar Relógio" (no topo) para começar o registo.</div>`;
+    }
+
+    if (playersData.length < 5) {
+        subStatus.textContent = `AVISO: Carregou apenas ${playersData.length} jogadores. Precisa de 5 para as Substituições. Agora, selecione os jogadores.`;
+        subStatus.className = 'status-message bg-yellow-50 border-yellow-500 text-yellow-800';
+    } else if (errorCount > 0) {
+        subStatus.textContent = `AVISO: ${playersData.length} jogadores carregados. ${errorCount} linha(s) ignorada(s). Selecione os 5 iniciais (3).`;
+        subStatus.className = 'status-message bg-yellow-50 border-yellow-500 text-yellow-800';
+    } else {
+        subStatus.textContent = `SUCESSO: ${playersData.length} jogadores carregados. Agora, selecione os 5 iniciais no ponto 3.`;
+        subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
+    }
+
+    // Garantir que todos começam no banco
+    playersData.forEach(p => p.court = false);
+
+    // redesenhar botões no UI
+    renderPlayers();
+}
 
  // --- FUNÇÕES DE SUBSTITUIÇÃO (RENOVADAS PARA SELEÇÃO MÚLTIPLA) ---
 
@@ -731,6 +797,12 @@ function renderPlayers() {
     const courtCount = playersData.filter(p => p.court).length;
     
     playersData.forEach(player => {
+    
+    // NÃO mostrar as equipas virtuais na UI de substituições
+        if (player.number === 100 || player.number === 101) {
+            return;
+        }
+    
         const btn = document.createElement('button');
         btn.className = `player-btn`;
         btn.textContent = `${player.number} - ${player.name}`;
@@ -796,7 +868,7 @@ function updateSubstitutionStatus() {
     
     // 2. Seleção Inicial (antes de começar o jogo)
     } else if (isInitialSelection) {
-        subStatus.textContent = `Selecione os 5 jogadores iniciais. (Em campo: ${courtCount}/5)`;
+        subStatus.textContent = `Selecione os 5 jogadores iniciais. (Em campo: ${courtCount}/5), + Equipa que inicia`;
         subStatus.className = 'status-message bg-indigo-50 border-indigo-500 text-indigo-800';
         
         if (courtCount === 5) {
@@ -947,13 +1019,65 @@ function confirmSubstitution() {
     selectedPlayersIn = [];
     
     // Feedback final
-    const finalMessage = `SUCESSO: ${outCount} troca(s) registada(s) em ${eventTime}.`;
-    subStatus.textContent = finalMessage;
-    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+const finalMessage = `SUCESSO: ${outCount} troca(s) registada(s) em ${eventTime}.`;
+subStatus.textContent = finalMessage;
+subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
 
-    renderPlayers(); // Redesenhar e limpar os destaques
+renderPlayers(); // Redesenhar e limpar os destaques
+
+// animação visual
+const btn2 = document.getElementById('confirmSubBtn');
+btn2.classList.add('event-flash');
+setTimeout(() => btn2.classList.remove('event-flash'), 300);
+
 }
-        
+
+// 👇 FUNÇÃO BOTÕES Posse EQUIPA
+
+function togglePossession(team) {
+    const nowStr = scoreboardDisplay.textContent;
+    const nowSec = timeToSeconds(nowStr);
+    const status = isScoreboardRunning ? 'Andar' : 'Parado';
+
+    // SE já havia posse ativa
+    if (possessionActive) {
+        // Fechar a posse anterior
+        const duration = Math.abs(nowSec - possessionStartSeconds);
+        possessionLog.push({
+            team: possessionActive,
+            start: formatSecondsToTime(possessionStartSeconds),
+            end: nowStr,
+            duration: duration
+        });
+    }
+
+    // Abrir nova posse
+    possessionActive = team;
+    possessionStartSeconds = nowSec;
+
+    let teamName = (team === 'A') ? 'EQUIPA A' : 'EQUIPA B';
+
+    logData.push({
+        type: 'possession',
+        time: nowStr,
+        status: status,
+        detail: { team: teamName }
+    });
+
+    updateLogPreview(
+        `POSSE: ${teamName} em ${nowStr}`,
+        'possession',
+        status
+    );
+
+    // feedback visual
+    document.getElementById('teamABtn').classList.remove('team-active');
+    document.getElementById('teamBBtn').classList.remove('team-active');
+    if (team === 'A') document.getElementById('teamABtn').classList.add('team-active');
+    if (team === 'B') document.getElementById('teamBBtn').classList.add('team-active');
+}
+
+
         // --- FUNÇÃO DE CÁLCULO DE TEMPO TOTAL EM CAMPO ---
         
         /**
@@ -1065,10 +1189,25 @@ function updateLogPreview(content, type, status = '') {
     
     // NOVO: Adicione este bloco para o evento 'mark'
     // ----------------------------------------------------------------------
+    
     else if (type === 'mark') {
          previewEntry.className = 'p-1 my-1 rounded bg-yellow-100 text-yellow-800 border-l-2 border-yellow-500 font-semibold';
          previewEntry.textContent = `[${status.toUpperCase()}] MARCA: ${content}`;
     }
+    
+    else if (type === 'possession') {
+    const previewEntry = document.createElement('div');
+    previewEntry.className = 'p-1 my-1 rounded bg-purple-100 text-purple-800 border-l-2 border-purple-500 font-semibold';
+    previewEntry.textContent = `[${status.toUpperCase()}] POSSE: ${content}`;
+    logPreview.prepend(previewEntry);
+
+    // limitar entradas no painel
+    while (logPreview.children.length > 15) {
+        logPreview.removeChild(logPreview.lastChild);
+    }
+    return;
+} 
+    
     // ----------------------------------------------------------------------
 
     logPreview.prepend(previewEntry);
@@ -1088,40 +1227,75 @@ function updateLogPreview(content, type, status = '') {
                 subStatus.className = 'status-message bg-red-50 border-red-500 text-red-800';
                 return;
             }
+            
+            // FECHAR posse ativa antes de exportar
+if (possessionActive && possessionStartSeconds !== null) {
+    const endStr = scoreboardDisplay.textContent;
+    const endSec = timeToSeconds(endStr);
+    const duration = Math.abs(endSec - possessionStartSeconds);
 
-    // --- 0. CALCULAR TOTAIS DE TEMPO ---
-    calculatePlayerTimeTotals();
+    possessionLog.push({
+        team: possessionActive,
+        start: formatSecondsToTime(possessionStartSeconds),
+        end: endStr,
+        duration: duration
+    });
+
+    possessionActive = null;
+    possessionStartSeconds = null;
+}
 
 // --- 0. CALCULAR TOTAIS DE TEMPO ---
 calculatePlayerTimeTotals();
 
-            // Alterado para ponto e vírgula (;) para melhor compatibilidade com Excel em regiões como Portugal.
-            const delimiter = ';'; 
-            // Adiciona o BOM (Byte Ouro Mark) para compatibilidade com caracteres especiais no Excel
-            const bom = "\uFEFF"; 
-            
-            const finalContentArray = [];
+// Alterado para ponto e vírgula (;) para melhor compatibilidade com Excel em regiões como Portugal.
+const delimiter = ';'; 
+// Adiciona o BOM (Byte Ouro Mark) para compatibilidade com caracteres especiais no Excel
+const bom = "\uFEFF"; 
 
-            // --------------------------------------------------------
-            // SECÇÃO 1: ESCALAÇÃO INICIAL
-            // --------------------------------------------------------
-            finalContentArray.push(" EQUIPA ");
-            finalContentArray.push(["Número", "Nome", "(Início do Jogo)"].join(delimiter));
-            
-            const initialLineupEvent = logData.find(e => e.type === 'initial_lineup');
-            const initialLineupNumbers = initialLineupEvent ? initialLineupEvent.detail.lineup.map(p => p.num) : playersData.filter(p => p.court).map(p => p.number);
-            
-            const lineupLines = playersData.map((player) => {
-                const isInitial = initialLineupNumbers.includes(player.number);
-                
-                return [
-                    player.number, 
-                    player.name, 
-                    isInitial ? "Titular" : "Banco"
-                ].join(delimiter);
-            });
-            finalContentArray.push(...lineupLines);
-            finalContentArray.push(""); // Linha de separação
+const finalContentArray = [];
+
+// --------------------------------------------------------
+// SECÇÃO POSSE DE BOLA (NOVA)
+// --------------------------------------------------------
+finalContentArray.push("POSSE DE BOLA");
+finalContentArray.push(["TM", "Início", "Fim", "Duração (seg)"].join(delimiter));
+
+possessionLog.forEach(p => {
+    finalContentArray.push([
+        p.team,
+        p.start,
+        p.end,
+        p.duration
+    ].join(delimiter));
+});
+
+finalContentArray.push(""); // linha vazia separadora
+
+// --------------------------------------------------------
+// SECÇÃO 1: ESCALAÇÃO INICIAL
+// --------------------------------------------------------
+finalContentArray.push(" EQUIPA ");
+finalContentArray.push(["Número", "Nome", "(Início do Jogo)"].join(delimiter));
+
+const initialLineupEvent = logData.find(e => e.type === 'initial_lineup');
+const initialLineupNumbers = initialLineupEvent ? initialLineupEvent.detail.lineup.map(p => p.num) : playersData.filter(p => p.court).map(p => p.number);
+
+const lineupLines = playersData.map((player) => {
+    const isInitial = initialLineupNumbers.includes(player.number);
+    
+    return [
+        player.number, 
+        player.name, 
+        isInitial ? "Titular" : "Banco"
+    ].join(delimiter);
+});
+finalContentArray.push(...lineupLines);
+finalContentArray.push(""); // Linha de separação
+
+// --- EQUIPAS INICIARAM ---
+
+// Determinar quem iniciou posse (primeira posse no jogo)
 
 
             // --------------------------------------------------------
@@ -1169,7 +1343,7 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
     let inName = "";
 
    // 🛑 Colunas 8-14 (H-N) NÃO SÃO MAIS INICIALIZADAS NEM USADAS.
-    // -------------------------------------------------------------
+   // -------------------------------------------------------------
 
     if (entry.type === 'status') {
         // --- Lógica de Estado (Andar/Parado) ---
@@ -1199,7 +1373,29 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
         inNum = d.in_no;    
         inName = d.in_name;  
         
-    } 
+}
+
+// -----------------------------------------------------------
+// NOVO BLOCO PARA POSSE
+// -----------------------------------------------------------
+else if (entry.type === 'possession') {
+
+    previousClockStatus = currentClockStatus;
+
+    // set type column safely
+    if (entry.detail.team === "EQUIPA A") {
+        typeCol = "Posse_TEAM_A";
+    } else {
+        typeCol = "Posse_TEAM_B";
+    }
+
+    // os restantes campos ficam vazios
+    statusCol = "";
+    outNum = "";
+    outName = "";
+    inNum = "";
+    inName = "";
+}
     // -----------------------------------------------------------
     // NOVO BLOCO PARA EVENTO 'MARK' (INSERÇÃO)
     // -----------------------------------------------------------
@@ -1228,40 +1424,27 @@ const logLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
 }).filter(line => line.trim() !== delimiter.repeat(6));
 
 // --------------------------------------------------------
-// 2. CÁLCULO DA SECÇÃO 3B: Log Sequencial (7 colunas - H a N)
-// ESTE BLOCO PERMANECE INALTERADO PARA MANTER OS DADOS DE SUBSTITUIÇÃO
+// 2. CÁLCULO DA SECÇÃO 3B: Log Sequencial (apenas SUBSTITUIÇÕES)
 // --------------------------------------------------------
 
 let lastClockStatus = ""; // Variável para armazenar o último estado válido (Andar/Parado)
 
-const sequentialLogLines = logData.filter(e => e.type !== 'initial_lineup').map(entry => {
-    
-    // Atualiza o estado: só guarda se for um evento de status
-    if (entry.status && entry.status !== 'N/A') {
-        lastClockStatus = entry.status;
-    }
-
-    if (entry.type === 'sub') {
+const sequentialLogLines = logData
+    .filter(e => e.type === 'sub')   // <- só substituições
+    .map(entry => {
         const d = entry.detail;
-        
-        // Colunas H a N (7 colunas)
-        const xmlTimeCol = entry.time;  
-        const xmlStatusCol = lastClockStatus; 
-        const xmlTypeCol = "Substituição"; 
-        const xmlOutNum = d.out_no; 
-        const xmlOutName = d.out_name; 
-        const xmlInNum = d.in_no; 
-        const xmlInName = d.in_name; 
-        
-        // Combina as 7 colunas (H a N)
-        return [
-            xmlTimeCol, xmlStatusCol, xmlTypeCol, xmlOutNum, xmlOutName, xmlInNum, xmlInName
-        ].join(delimiter);
-    }
-    // Retorna nulo ou vazio para eventos que não são 'sub'
-    return null;
 
-}).filter(line => line !== null && line.trim() !== delimiter.repeat(6)); 
+        return [
+            entry.time,          // Tempo
+            entry.status || "",  // Estado (Andar/Parado)
+            "Substituição",      // Tipo de Evento
+            d.out_no,            // Num Sai
+            d.out_name,          // Nome Sai
+            d.in_no,             // Num Entra
+            d.in_name            // Nome Entra
+        ].join(delimiter);
+    })
+    .filter(line => line && line.trim() !== delimiter.repeat(6));
 
 
 // --------------------------------------------------------
@@ -1307,39 +1490,59 @@ const timestamp =
 // Definir nome único do ficheiro
 a.download = `${timestamp}_Volume_de_Jogo.csv`;
 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            // ----------------------------------------------------
-            // 💡 CORREÇÃO FINAL: Salvar e Restaurar playersData
-            // ----------------------------------------------------
-            
-            // 1. SALVAR O PLANTEL ANTES DO RESET
-            // Cria uma cópia profunda (deep copy) da lista atual de jogadores.
-            const savedPlayersData = JSON.parse(JSON.stringify(playersData)); 
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
 
-            // 5. Limpa o log após a exportação e reseta o estado.
-            logData = [];
-            stopAndReset(); // <--- ONDE O playersData PODE SER APAGADO
+// ----------------------------------------------------
+// Salvar e Restaurar playersData
+// ----------------------------------------------------
 
-            // 2. RESTAURAR O PLANTEL (Sobrescreve qualquer limpeza feita pelo stopAndReset)
-            playersData = savedPlayersData; 
-            
-            // 3. Redesenhar os botões (agora a lista playersData não está vazia)
-            renderPlayers(); 
-            
-            // Mensagem de sucesso
-            subStatus.textContent =
-    `Dados exportados com sucesso!, Ficheiro criado:, ${timestamp}_Volume_de_Jogo.csv`;
+// Guardar
+const savedPlayersData = JSON.parse(JSON.stringify(playersData));
+
+// Fechar posse ativa
+if (possessionActive && possessionStartSeconds !== null) {
+    const endStr = scoreboardDisplay.textContent;
+    const endSec = timeToSeconds(endStr);
+    const duration = Math.abs(endSec - possessionStartSeconds);
+
+    possessionLog.push({
+        team: possessionActive,
+        start: formatSecondsToTime(possessionStartSeconds),
+        end: endStr,
+        duration: duration
+    });
+
+    possessionActive = null;
+    possessionStartSeconds = null;
+}
+
+// Reset
+logData = [];
+stopAndReset();
+
+// Restaurar
+playersData = savedPlayersData;
+playersData.forEach(p => {
+    if (p.court === undefined) p.court = false;
+});
+
+// Desenhar
+renderPlayers();
+
+// Mensagem
+subStatus.textContent =
+`Dados exportados com sucesso!, Ficheiro criado:, ${timestamp}_Volume_de_Jogo.csv`;
 subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-            subStatus.className = 'status-message bg-green-50 border-green-500 text-green-800';
-        } // Fecho final da função (se aplicável)
+}
 
         // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Aplica o preset inicial
+
+    ensureTeamLines();
+
     applyPreset(); 
     
     // Verifica se existe plantel guardado
