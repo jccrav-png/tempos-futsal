@@ -201,9 +201,7 @@
 13,Tiago Brito
 14,Carlinhos
 16,Bernardo Paço
-15,Outro
-100,EQUIPA A
-101,EQUIPA B</textarea>
+15,Outro</textarea>
                         <button id="loadPlayersBtn" onclick="loadPlayersFromInput()" class="btn-config mt-4 w-full text-white bg-green-600 hover:bg-green-700">
                             Carregar Jogadores
                         </button>
@@ -326,18 +324,6 @@
 
     <script>
     
-    function ensureTeamLines() {
-    let current = playerInput.value.trim();
-
-    if (!current.includes('100,')) {
-        current += '\n100,EQUIPA A';
-    }
-    if (!current.includes('101,')) {
-        current += '\n101,EQUIPA B';
-    }
-
-    playerInput.value = current;
-}
 
         // --- DADOS E ESTADO GLOBAIS ---
         let initialTotalSeconds = 1200; // Padrão 20:00
@@ -776,13 +762,7 @@ function stopAndReset(isEndOfGame = false) {
     selectedPlayerOut = null; 
     selectedPlayerIn = null;
 
-    // ADICIONAR EQUIPAS AO PLANTEL DEPOIS DO RESET
-    if (!playersData.some(p => p.number === 100)) {
-        playersData.push({ number: 101, name: 'EQUIPA A', court: false, totalCourtTimeSeconds: 0 });
-    }
-    if (!playersData.some(p => p.number === 101)) {
-        playersData.push({ number: 102, name: 'EQUIPA B', court: false, totalCourtTimeSeconds: 0 });
-    }
+
 
     // Habilita o placar se houver jogadores
     toggleScoreboardBtn.disabled = playersData.length === 0;
@@ -1581,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedMode === 'up') timePresetSelect.value = 'corrido';
     if (savedMode === 'down') timePresetSelect.value = 'futsal';
 
-    ensureTeamLines();
+   
 
     // aplicar as configurações restauradas ao relógio
     updateTimeConfiguration();
