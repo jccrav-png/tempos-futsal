@@ -633,51 +633,70 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
             
             // Atualiza o estado da UI (para ativar/desativar substituições)
             renderPlayers(); 
-        }
+
 /**
  * Regista um evento de "Evento" no logData com o tempo atual do placar
  * e atualiza o log de pré-visualização.
  */
 function markEvent() {
-    // 1. Verificação: O relógio deve ter sido iniciado uma vez (mesmo que esteja parado)
     if (playersData.length === 0) {
         subStatus.textContent = "ERRO: Carregue os jogadores (1) e inicie o Relógio (2) antes de registar um Evento.";
         subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
         return;
     }
-    
-    // Obtém o tempo atual e o estado do relógio
+
     const eventTime = scoreboardDisplay.textContent;
     const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
 
-    // 2. Criar o registo de evento (Note que o 'type' interno continua a ser 'mark')
     logData.push({
-        type: 'mark', 
+        type: 'mark',
         time: eventTime,
         status: currentStatus,
         detail: {
-            event: 'Evento' // Detalhe simples para o log
+            event: 'Evento'
         }
     });
 
-    // 3. Atualizar a pré-visualização do log e o feedback de estado
     updateLogPreview(
-        `Evento registado em ${eventTime}`, // <-- CORRIGIDO AQUI
+        `Evento registado em ${eventTime}`,
         'mark',
         currentStatus
     );
 
-    // 4. Feedback visual
-subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
-subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+    subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
+    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
 
-// animação do botão
-const btn = document.getElementById('markBtn');
-btn.classList.add('event-flash');
-setTimeout(() => btn.classList.remove('event-flash'), 300);
-
+    const btn = document.getElementById('markBtn');
+    btn.classList.add('event-flash');
+    setTimeout(() => btn.classList.remove('event-flash'), 300);
 }
-        
+
+/* === PARTE NOVA, NÃO ESTRAGA === */
+function markCustomEvent(eventName) {
+    if (playersData.length === 0) {
+        subStatus.textContent = "ERRO: Inicie o jogo antes de registar eventos.";
+        subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
+        return;
+    }
+
+    const eventTime = scoreboardDisplay.textContent;
+    const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
+
+    logData.push({
+        type: 'mark',
+        time: eventTime,
+        status: currentStatus,
+        detail: {
+            event: eventName
+        }
+    });
+
+    updateLogPreview(
+        `${eventName} registado em ${eventTime}`,
+        'mark',
+        currentStatus
+    );
+}
        /**
  * Para o cronómetro, a deteção e reinicia o tempo e o log.
  * @param {boolean} isEndOfGame - Se TRUE, é uma paragem automática por fim do tempo.
