@@ -260,24 +260,37 @@
                             <!-- Botões dos jogadores serão injetados aqui -->
                         </div>
                         
-                        <!-- BOTÃO EVENTO E BOTÃO DE SUBSTITUIÇÃO -->
+                        <!-- BOTÃO EVENTO, JP, OPGL E BOTÃO DE SUBSTITUIÇÃO -->
                         
-<div class="grid grid-cols-[120px_1fr] gap-4">
+<div class="grid grid-cols-[120px_120px_120px_1fr] gap-4">
 
-    <!-- BOTÃO EVENTO (coluna estreita) -->
+
     <button id="markBtn"
             onclick="markEvent()"
             class="btn-base py-2 text-black bg-yellow-300 hover:bg-yellow-400 text-base font-semibold rounded-md">
         EVENTO
     </button>
 
-    <!-- BOTÃO CONFIRMAR SUBSTITUIÇÃO (coluna larga) -->
+
+    <button
+            class="btn-base py-2 text-white bg-purple-600 hover:bg-purple-700 text-base font-semibold rounded-md">
+        JP
+    </button>
+
+
+    <button
+            class="btn-base py-2 text-black bg-purple-200 hover:bg-purple-300 text-base font-semibold rounded-md">
+        OPGL
+    </button>
+
+
     <button id="confirmSubBtn"
-            onclick="confirmSubstitution()"
-            disabled
-            class="btn-base py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg rounded-md">
+           onclick="confirmSubstitution()"
+           disabled
+           class="btn-base py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg rounded-md">
         CONFIRMAR SUBSTITUIÇÃO
     </button>
+
 
 </div>
 
