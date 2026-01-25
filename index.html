@@ -263,35 +263,28 @@
                         <!-- BOTÃO EVENTO, JP, OPGL E BOTÃO DE SUBSTITUIÇÃO -->
                         
 <div class="grid grid-cols-2 sm:grid-cols-[120px_120px_120px_1fr] gap-4">
-
-
-    <button id="markBtn"
-            onclick="markEvent()"
-            class="btn-base py-2 text-black bg-yellow-300 hover:bg-yellow-400 text-base font-semibold rounded-md">
-        EVENTO
-    </button>
-
-
-    <button
-            class="btn-base py-2 text-white bg-purple-600 hover:bg-purple-700 text-base font-semibold rounded-md">
-        JP
-    </button>
-
-
-    <button
-            class="btn-base py-2 text-black bg-purple-200 hover:bg-purple-300 text-base font-semibold rounded-md">
-        OPGL
-    </button>
-
-
     <button id="confirmSubBtn"
-           onclick="confirmSubstitution()"
-           disabled
-           class="btn-base py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg rounded-md">
+            onclick="confirmSubstitution()"
+            disabled
+            class="btn-base py-4 text-white bg-primary-red hover:bg-red-600 opacity-50 cursor-not-allowed text-lg rounded-md order-1">
         CONFIRMAR SUBSTITUIÇÃO
     </button>
 
+    <button id="markBtn"
+            onclick="markEvent()"
+            class="btn-base py-2 text-black bg-yellow-300 hover:bg-yellow-400 text-base font-semibold rounded-md order-2">
+        EVENTO
+    </button>
 
+    <button
+            class="btn-base py-2 text-white bg-purple-600 hover:bg-purple-700 text-base font-semibold rounded-md order-3">
+        JP
+    </button>
+
+    <button
+            class="btn-base py-2 text-black bg-purple-200 hover:bg-purple-300 text-base font-semibold rounded-md order-4">
+        OPGL
+    </button>
 </div>
 
 <!-- NOVOS BOTÕES DE POSSE DE BOLA -->
