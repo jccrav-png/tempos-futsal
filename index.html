@@ -1220,7 +1220,6 @@ function updateLogPreview(content, type, status = '') {
     }
     
     else if (type === 'possession') {
-    const previewEntry = document.createElement('div');
     previewEntry.className = 'p-1 my-1 rounded bg-purple-100 text-purple-800 border-l-2 border-purple-500 font-semibold';
     previewEntry.textContent = `[${status.toUpperCase()}] POSSE: ${content}`;
     logPreview.prepend(previewEntry);
