@@ -277,11 +277,13 @@
     </button>
 
     <button
+            onclick="markCustomEvent('JP')"
             class="btn-base py-2 text-white bg-purple-600 hover:bg-purple-700 text-base font-semibold rounded-md order-3">
         JP
     </button>
 
     <button
+            onclick="markCustomEvent('OPGL')"
             class="btn-base py-2 text-black bg-purple-200 hover:bg-purple-300 text-base font-semibold rounded-md order-4">
         OPGL
     </button>
@@ -639,64 +641,81 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
  * e atualiza o log de pré-visualização.
  */
 function markEvent() {
+    // 1. Verificação: O relógio deve ter sido iniciado uma vez (mesmo que esteja parado)
     if (playersData.length === 0) {
         subStatus.textContent = "ERRO: Carregue os jogadores (1) e inicie o Relógio (2) antes de registar um Evento.";
         subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
         return;
     }
-
+    
+    // Obtém o tempo atual e o estado do relógio
     const eventTime = scoreboardDisplay.textContent;
     const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
 
+    // 2. Criar o registo de evento (Note que o 'type' interno continua a ser 'mark')
     logData.push({
-        type: 'mark',
+        type: 'mark', 
         time: eventTime,
         status: currentStatus,
         detail: {
-            event: 'Evento'
+            event: 'Evento' // Detalhe simples para o log
         }
     });
 
+    // 3. Atualizar a pré-visualização do log e o feedback de estado
     updateLogPreview(
-        `Evento registado em ${eventTime}`,
+        `Evento registado em ${eventTime}`, // <-- CORRIGIDO AQUI
         'mark',
         currentStatus
     );
 
-    subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
-    subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
+    // 4. Feedback visual
+subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
+subStatus.className = 'status-message bg-blue-100 border-blue-500 text-blue-800';
 
-    const btn = document.getElementById('markBtn');
-    btn.classList.add('event-flash');
-    setTimeout(() => btn.classList.remove('event-flash'), 300);
+// animação do botão
+const btn = document.getElementById('markBtn');
+btn.classList.add('event-flash');
+setTimeout(() => btn.classList.remove('event-flash'), 300);
+
 }
 
-/* === PARTE NOVA, NÃO ESTRAGA === */
+
+/**
+* Regista um evento personalizado (ex: JP, OPGL) no logData
+* com o tempo atual do placar e o estado do relógio.
+* Utilizado pelos botões JP e OPGL.
+*/
+
 function markCustomEvent(eventName) {
-    if (playersData.length === 0) {
-        subStatus.textContent = "ERRO: Inicie o jogo antes de registar eventos.";
-        subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
-        return;
-    }
-
-    const eventTime = scoreboardDisplay.textContent;
-    const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
-
-    logData.push({
-        type: 'mark',
-        time: eventTime,
-        status: currentStatus,
-        detail: {
-            event: eventName
-        }
-    });
-
-    updateLogPreview(
-        `${eventName} registado em ${eventTime}`,
-        'mark',
-        currentStatus
-    );
+if (playersData.length === 0) {
+subStatus.textContent = "ERRO: Carregue os jogadores antes de registar eventos.";
+subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
+return;
 }
+
+
+const eventTime = scoreboardDisplay.textContent;
+const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
+
+
+logData.push({
+type: 'mark',
+time: eventTime,
+status: currentStatus,
+detail: {
+event: eventName
+}
+});
+
+
+updateLogPreview(
+`${eventName} registado em ${eventTime}`,
+'mark',
+currentStatus
+);
+}
+        
        /**
  * Para o cronómetro, a deteção e reinicia o tempo e o log.
  * @param {boolean} isEndOfGame - Se TRUE, é uma paragem automática por fim do tempo.
@@ -1220,6 +1239,7 @@ function updateLogPreview(content, type, status = '') {
     }
     
     else if (type === 'possession') {
+    const previewEntry = document.createElement('div');
     previewEntry.className = 'p-1 my-1 rounded bg-purple-100 text-purple-800 border-l-2 border-purple-500 font-semibold';
     previewEntry.textContent = `[${status.toUpperCase()}] POSSE: ${content}`;
     logPreview.prepend(previewEntry);
@@ -1435,7 +1455,7 @@ else if (entry.type === 'possession') {
         previousClockStatus = currentClockStatus;
         
         // --- COLUNAS 1-7 (MANTIDAS COMO FORMATO ORIGINAL) ---
-        typeCol = "Evento"; // Tipo de Evento (Coluna C)
+        typeCol = entry.detail?.event || "Evento"; // Tipo de Evento (Coluna C)
         statusCol = ""; // Estado do Relógio (Coluna B - vazio para Marca)
         
         // Deixa as colunas de substituição vazias
