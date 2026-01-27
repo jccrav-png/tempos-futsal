@@ -277,13 +277,13 @@
     </button>
 
     <button
-            onclick="markCustomEvent('JP')"
+            onclick="markCustomEvent('JP', this)"
             class="btn-base py-2 text-white bg-purple-600 hover:bg-purple-700 text-base font-semibold rounded-md order-3">
         JP
     </button>
 
     <button
-            onclick="markCustomEvent('OPGL')"
+            onclick="markCustomEvent('OPGL' this)"
             class="btn-base py-2 text-black bg-purple-200 hover:bg-purple-300 text-base font-semibold rounded-md order-4">
         OPGL
     </button>
@@ -679,7 +679,6 @@ btn.classList.add('event-flash');
 setTimeout(() => btn.classList.remove('event-flash'), 300);
 
 }
-
 
 
 /**
