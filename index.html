@@ -664,19 +664,10 @@ function markEvent() {
 
     // 3. Atualizar a pré-visualização do log e o feedback de estado
     updateLogPreview(
-    `${eventName} registado em ${eventTime}`,
-    'mark',
-    currentStatus
-	);
-
-	// animação do botão clicado
-	const buttons = document.querySelectorAll('button');
-	buttons.forEach(btn => {
-    	if (btn.textContent.trim() === eventName) {
-        	btn.classList.add('event-flash');
-        	setTimeout(() => btn.classList.remove('event-flash'), 300);
-    	}
-	});
+        `Evento registado em ${eventTime}`, 
+        'mark',
+        currentStatus
+    );
 
     // 4. Feedback visual
 subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
@@ -690,39 +681,39 @@ setTimeout(() => btn.classList.remove('event-flash'), 300);
 }
 
 
+
 /**
-* Regista um evento personalizado (ex: JP, OPGL) no logData
-* com o tempo atual do placar e o estado do relógio.
-* Utilizado pelos botões JP e OPGL.
-*/
+ * Regista um evento personalizado (JP, OPGL)
+ * e aplica feedback visual no botão clicado.
+ */
+function markCustomEvent(eventName, btn) {
+    if (playersData.length === 0) {
+        subStatus.textContent = "ERRO: Carregue os jogadores antes de registar eventos.";
+        subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
+        return;
+    }
 
-function markCustomEvent(eventName) {
-if (playersData.length === 0) {
-subStatus.textContent = "ERRO: Carregue os jogadores antes de registar eventos.";
-subStatus.className = 'status-message bg-red-100 border-red-500 text-red-800';
-return;
-}
+    const eventTime = scoreboardDisplay.textContent;
+    const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
 
+    logData.push({
+        type: 'mark',
+        time: eventTime,
+        status: currentStatus,
+        detail: {
+            event: eventName
+        }
+    });
 
-const eventTime = scoreboardDisplay.textContent;
-const currentStatus = isScoreboardRunning ? 'Andar' : 'Parado';
+    updateLogPreview(
+        `${eventName} registado em ${eventTime}`,
+        'mark',
+        currentStatus
+    );
 
-
-logData.push({
-type: 'mark',
-time: eventTime,
-status: currentStatus,
-detail: {
-event: eventName
-}
-});
-
-
-updateLogPreview(
-`${eventName} registado em ${eventTime}`,
-'mark',
-currentStatus
-);
+    // 🔥 FLASH VISUAL (igual ao botão EVENTO)
+    btn.classList.add('event-flash');
+    setTimeout(() => btn.classList.remove('event-flash'), 300);
 }
         
        /**
