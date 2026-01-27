@@ -664,10 +664,19 @@ function markEvent() {
 
     // 3. Atualizar a pré-visualização do log e o feedback de estado
     updateLogPreview(
-        `Evento registado em ${eventTime}`, // <-- CORRIGIDO AQUI
-        'mark',
-        currentStatus
-    );
+    `${eventName} registado em ${eventTime}`,
+    'mark',
+    currentStatus
+	);
+
+	// animação do botão clicado
+	const buttons = document.querySelectorAll('button');
+	buttons.forEach(btn => {
+    	if (btn.textContent.trim() === eventName) {
+        	btn.classList.add('event-flash');
+        	setTimeout(() => btn.classList.remove('event-flash'), 300);
+    	}
+	});
 
     // 4. Feedback visual
 subStatus.textContent = `Evento registado com sucesso em ${eventTime}. Estado: ${currentStatus}.`;
