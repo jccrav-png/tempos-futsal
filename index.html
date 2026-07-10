@@ -336,6 +336,7 @@
         let detectionInterval = null; 
         let isScoreboardRunning = false;
         let isDetectionRunning = false; // Flag para o ciclo de deteção
+        let lastLoggedSecond = null;
         
         // Estrutura de Log: { type: 'status' | 'sub' | 'initial_lineup', time: 'MM:SS', status: 'Andar' | 'Parado', detail: {...} }
         let logData = [];
@@ -527,20 +528,35 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
          * Lógica que simula a "leitura OCR" (deteção) a cada segundo e regista.
          */
         function detectAndLogTime() {
-            const currentTime = scoreboardDisplay.textContent;
-            
-            // Captura o estado do relógio: Andar (a contar) ou Parado (pausado)
-            const status = isScoreboardRunning ? 'Andar' : 'Parado'; 
-
-            // Regista o tempo no logData como um evento 'status' (Tempo/Estado)
-            logData.push({ 
-                type: 'status', 
-                time: currentTime, 
-                status: status
-            }); 
-
-            // Atualiza a pré-visualização para mostrar o último registo
-            updateLogPreview(currentTime, 'time', status);
+        
+            const currentTime =
+                scoreboardDisplay.textContent;
+        
+            const status =
+                isScoreboardRunning
+                    ? 'Andar'
+                    : 'Parado';
+        
+            const uniqueKey =
+                currentTime + "_" + status;
+        
+            if (uniqueKey === lastLoggedSecond) {
+                return;
+            }
+        
+            lastLoggedSecond = uniqueKey;
+        
+            logData.push({
+                type:'status',
+                time:currentTime,
+                status:status
+            });
+        
+            updateLogPreview(
+                currentTime,
+                'time',
+                status
+            );
         }
 
 
