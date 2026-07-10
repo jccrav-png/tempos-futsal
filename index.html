@@ -600,11 +600,16 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
                 if (pauseStartTimestamp !== null) {
 
                     const pausedSeconds =
-                        Math.round(
+                        Math.floor(
                             (Date.now() - pauseStartTimestamp)
                             / 1000
                         );
-                
+                        
+                    console.log(
+                        "PAUSADO:",
+                        pausedSeconds
+                    );    
+                                    
                     for (
                         let i = 0;
                         i < pausedSeconds;
