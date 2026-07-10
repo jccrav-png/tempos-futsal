@@ -337,6 +337,7 @@
         let isScoreboardRunning = false;
         let isDetectionRunning = false; // Flag para o ciclo de deteção
         let lastLoggedSecond = null;
+        let pauseStartTimestamp = null;
         
         // Estrutura de Log: { type: 'status' | 'sub' | 'initial_lineup', time: 'MM:SS', status: 'Andar' | 'Parado', detail: {...} }
         let logData = [];
@@ -532,10 +533,11 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
             const currentTime =
                 scoreboardDisplay.textContent;
         
-            const status =
-                isScoreboardRunning
-                    ? 'Andar'
-                    : 'Parado';
+            if (!isScoreboardRunning) {
+                return;
+            }
+            
+            const status = 'Andar';
         
             const uniqueKey =
                 currentTime + "_" + status;
@@ -570,6 +572,7 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
                 isScoreboardRunning = false;
                 
                 const pauseTime = formatTime(totalSeconds);
+                pauseStartTimestamp = Date.now();
                 
                 // REGISTO IMEDIATO DE MUDANÇA DE ESTADO para 'Parado' no segundo exato do clique.
                 logData.push({ 
@@ -594,6 +597,31 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
                 // Lógica de INÍCIO
                 const startTime = formatTime(totalSeconds);
                 
+                if (pauseStartTimestamp !== null) {
+
+                    const pausedSeconds =
+                        Math.round(
+                            (Date.now() - pauseStartTimestamp)
+                            / 1000
+                        );
+                
+                    for (
+                        let i = 0;
+                        i < pausedSeconds;
+                        i++
+                    ) {
+                
+                        logData.push({
+                            type: 'status',
+                            time: startTime,
+                            status: 'Parado'
+                        });
+                
+                    }
+                
+                    pauseStartTimestamp = null;
+                }
+                                
                 // 1. Regista a escalação inicial no LogData
                 const initialCourt = playersData.filter(p => p.court).map(p => ({
                     num: p.number, 
