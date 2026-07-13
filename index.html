@@ -332,16 +332,20 @@
         let initialTotalSeconds = 1200; // Padrão 20:00
         let totalSeconds = 1200; 
         let isCountingUp = false; // Decrescente (false) por padrão
+        
         let scoreboardInterval = null;
         let detectionInterval = null; 
+        
         let isScoreboardRunning = false;
         let isDetectionRunning = false; // Flag para o ciclo de deteção
+        
         let lastLoggedSecond = null;
-        let pauseStartTimestamp = null;
+        let lastDetectionTimestamp = null;
         
         // Estrutura de Log: { type: 'status' | 'sub' | 'initial_lineup', time: 'MM:SS', status: 'Andar' | 'Parado', detail: {...} }
         let logData = [];
-        let restoringFromMemory = false; 
+        let restoringFromMemory = false;
+
         
         // Variáveis para guardar a substituição multipla
        let selectedPlayersOut = []; // Array de objetos (jogadores em campo)
@@ -529,36 +533,48 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
          * Lógica que simula a "leitura OCR" (deteção) a cada segundo e regista.
          */
         function detectAndLogTime() {
+
+            const now = Date.now();
+        
+            if (lastDetectionTimestamp === null) {
+                lastDetectionTimestamp = now;
+                return;
+            }
+        
+            const diff =
+                Math.floor(
+                    (now - lastDetectionTimestamp)
+                    / 1000
+                );
+        
+            if (diff <= 0) {
+                return;
+            }
+        
+            lastDetectionTimestamp += diff * 1000;
         
             const currentTime =
                 scoreboardDisplay.textContent;
         
-            if (!isScoreboardRunning) {
-                return;
+            const status =
+                isScoreboardRunning
+                    ? 'Andar'
+                    : 'Parado';
+        
+            for (let i = 0; i < diff; i++) {
+        
+                logData.push({
+                    type: 'status',
+                    time: currentTime,
+                    status: status
+                });
+        
+                updateLogPreview(
+                    currentTime,
+                    'time',
+                    status
+                );
             }
-            
-            const status = 'Andar';
-        
-            const uniqueKey =
-                currentTime + "_" + status;
-        
-            if (uniqueKey === lastLoggedSecond) {
-                return;
-            }
-        
-            lastLoggedSecond = uniqueKey;
-        
-            logData.push({
-                type:'status',
-                time:currentTime,
-                status:status
-            });
-        
-            updateLogPreview(
-                currentTime,
-                'time',
-                status
-            );
         }
 
 
@@ -572,7 +588,7 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
                 isScoreboardRunning = false;
                 
                 const pauseTime = formatTime(totalSeconds);
-                pauseStartTimestamp = Date.now();
+
                 
                 // REGISTO IMEDIATO DE MUDANÇA DE ESTADO para 'Parado' no segundo exato do clique.
                 logData.push({ 
@@ -597,35 +613,6 @@ localStorage.setItem('last_seconds', initialSecondsInput.value);
                 // Lógica de INÍCIO
                 const startTime = formatTime(totalSeconds);
                 
-                if (pauseStartTimestamp !== null) {
-
-                    const pausedSeconds =
-                        Math.floor(
-                            (Date.now() - pauseStartTimestamp)
-                            / 1000
-                        );
-                        
-                    console.log(
-                        "PAUSADO:",
-                        pausedSeconds
-                    );    
-                                    
-                    for (
-                        let i = 0;
-                        i < pausedSeconds;
-                        i++
-                    ) {
-                
-                        logData.push({
-                            type: 'status',
-                            time: startTime,
-                            status: 'Parado'
-                        });
-                
-                    }
-                
-                    pauseStartTimestamp = null;
-                }
                                 
                 // 1. Regista a escalação inicial no LogData
                 const initialCourt = playersData.filter(p => p.court).map(p => ({
